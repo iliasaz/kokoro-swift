@@ -1,0 +1,554 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 77;
+	objects = {
+
+/* Begin PBXContainerItemProxy section */
+		49B7A2342D7FB0E300B2BD45 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 49B7A21A2D7FB0E200B2BD45 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 49B7A2212D7FB0E200B2BD45;
+			remoteInfo = "kokoro-swift";
+		};
+		49B7A23E2D7FB0E300B2BD45 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 49B7A21A2D7FB0E200B2BD45 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 49B7A2212D7FB0E200B2BD45;
+			remoteInfo = "kokoro-swift";
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXFileReference section */
+		49B7A2222D7FB0E200B2BD45 /* kokoro-swift.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "kokoro-swift.app"; sourceTree = BUILT_PRODUCTS_DIR; };
+		49B7A2332D7FB0E300B2BD45 /* kokoro-swiftTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "kokoro-swiftTests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
+		49B7A23D2D7FB0E300B2BD45 /* kokoro-swiftUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "kokoro-swiftUITests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
+/* End PBXFileReference section */
+
+/* Begin PBXFileSystemSynchronizedRootGroup section */
+		49B7A2242D7FB0E200B2BD45 /* kokoro-swift */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = "kokoro-swift";
+			sourceTree = "<group>";
+		};
+		49B7A2362D7FB0E300B2BD45 /* kokoro-swiftTests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = "kokoro-swiftTests";
+			sourceTree = "<group>";
+		};
+		49B7A2402D7FB0E300B2BD45 /* kokoro-swiftUITests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = "kokoro-swiftUITests";
+			sourceTree = "<group>";
+		};
+/* End PBXFileSystemSynchronizedRootGroup section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		49B7A21F2D7FB0E200B2BD45 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		49B7A2302D7FB0E300B2BD45 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		49B7A23A2D7FB0E300B2BD45 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		49B7A2192D7FB0E200B2BD45 = {
+			isa = PBXGroup;
+			children = (
+				49B7A2242D7FB0E200B2BD45 /* kokoro-swift */,
+				49B7A2362D7FB0E300B2BD45 /* kokoro-swiftTests */,
+				49B7A2402D7FB0E300B2BD45 /* kokoro-swiftUITests */,
+				49B7A2232D7FB0E200B2BD45 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		49B7A2232D7FB0E200B2BD45 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				49B7A2222D7FB0E200B2BD45 /* kokoro-swift.app */,
+				49B7A2332D7FB0E300B2BD45 /* kokoro-swiftTests.xctest */,
+				49B7A23D2D7FB0E300B2BD45 /* kokoro-swiftUITests.xctest */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		49B7A2212D7FB0E200B2BD45 /* kokoro-swift */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 49B7A2472D7FB0E300B2BD45 /* Build configuration list for PBXNativeTarget "kokoro-swift" */;
+			buildPhases = (
+				49B7A21E2D7FB0E200B2BD45 /* Sources */,
+				49B7A21F2D7FB0E200B2BD45 /* Frameworks */,
+				49B7A2202D7FB0E200B2BD45 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				49B7A2242D7FB0E200B2BD45 /* kokoro-swift */,
+			);
+			name = "kokoro-swift";
+			packageProductDependencies = (
+			);
+			productName = "kokoro-swift";
+			productReference = 49B7A2222D7FB0E200B2BD45 /* kokoro-swift.app */;
+			productType = "com.apple.product-type.application";
+		};
+		49B7A2322D7FB0E300B2BD45 /* kokoro-swiftTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 49B7A24A2D7FB0E300B2BD45 /* Build configuration list for PBXNativeTarget "kokoro-swiftTests" */;
+			buildPhases = (
+				49B7A22F2D7FB0E300B2BD45 /* Sources */,
+				49B7A2302D7FB0E300B2BD45 /* Frameworks */,
+				49B7A2312D7FB0E300B2BD45 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				49B7A2352D7FB0E300B2BD45 /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				49B7A2362D7FB0E300B2BD45 /* kokoro-swiftTests */,
+			);
+			name = "kokoro-swiftTests";
+			packageProductDependencies = (
+			);
+			productName = "kokoro-swiftTests";
+			productReference = 49B7A2332D7FB0E300B2BD45 /* kokoro-swiftTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
+		49B7A23C2D7FB0E300B2BD45 /* kokoro-swiftUITests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 49B7A24D2D7FB0E300B2BD45 /* Build configuration list for PBXNativeTarget "kokoro-swiftUITests" */;
+			buildPhases = (
+				49B7A2392D7FB0E300B2BD45 /* Sources */,
+				49B7A23A2D7FB0E300B2BD45 /* Frameworks */,
+				49B7A23B2D7FB0E300B2BD45 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				49B7A23F2D7FB0E300B2BD45 /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				49B7A2402D7FB0E300B2BD45 /* kokoro-swiftUITests */,
+			);
+			name = "kokoro-swiftUITests";
+			packageProductDependencies = (
+			);
+			productName = "kokoro-swiftUITests";
+			productReference = 49B7A23D2D7FB0E300B2BD45 /* kokoro-swiftUITests.xctest */;
+			productType = "com.apple.product-type.bundle.ui-testing";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		49B7A21A2D7FB0E200B2BD45 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastSwiftUpdateCheck = 1620;
+				LastUpgradeCheck = 1620;
+				TargetAttributes = {
+					49B7A2212D7FB0E200B2BD45 = {
+						CreatedOnToolsVersion = 16.2;
+					};
+					49B7A2322D7FB0E300B2BD45 = {
+						CreatedOnToolsVersion = 16.2;
+						TestTargetID = 49B7A2212D7FB0E200B2BD45;
+					};
+					49B7A23C2D7FB0E300B2BD45 = {
+						CreatedOnToolsVersion = 16.2;
+						TestTargetID = 49B7A2212D7FB0E200B2BD45;
+					};
+				};
+			};
+			buildConfigurationList = 49B7A21D2D7FB0E200B2BD45 /* Build configuration list for PBXProject "kokoro-swift" */;
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = 49B7A2192D7FB0E200B2BD45;
+			minimizedProjectReferenceProxies = 1;
+			preferredProjectObjectVersion = 77;
+			productRefGroup = 49B7A2232D7FB0E200B2BD45 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				49B7A2212D7FB0E200B2BD45 /* kokoro-swift */,
+				49B7A2322D7FB0E300B2BD45 /* kokoro-swiftTests */,
+				49B7A23C2D7FB0E300B2BD45 /* kokoro-swiftUITests */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		49B7A2202D7FB0E200B2BD45 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		49B7A2312D7FB0E300B2BD45 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		49B7A23B2D7FB0E300B2BD45 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		49B7A21E2D7FB0E200B2BD45 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		49B7A22F2D7FB0E300B2BD45 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		49B7A2392D7FB0E300B2BD45 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		49B7A2352D7FB0E300B2BD45 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 49B7A2212D7FB0E200B2BD45 /* kokoro-swift */;
+			targetProxy = 49B7A2342D7FB0E300B2BD45 /* PBXContainerItemProxy */;
+		};
+		49B7A23F2D7FB0E300B2BD45 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 49B7A2212D7FB0E200B2BD45 /* kokoro-swift */;
+			targetProxy = 49B7A23E2D7FB0E300B2BD45 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		49B7A2452D7FB0E300B2BD45 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MACOSX_DEPLOYMENT_TARGET = 15.2;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = macosx;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+			};
+			name = Debug;
+		};
+		49B7A2462D7FB0E300B2BD45 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MACOSX_DEPLOYMENT_TARGET = 15.2;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				SDKROOT = macosx;
+				SWIFT_COMPILATION_MODE = wholemodule;
+			};
+			name = Release;
+		};
+		49B7A2482D7FB0E300B2BD45 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = "kokoro-swift/kokoro_swift.entitlements";
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_ASSET_PATHS = "\"kokoro-swift/Preview Content\"";
+				DEVELOPMENT_TEAM = 6CGNH3LTV7;
+				ENABLE_HARDENED_RUNTIME = YES;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "com.iliasazonov.kokoro-swift";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Debug;
+		};
+		49B7A2492D7FB0E300B2BD45 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = "kokoro-swift/kokoro_swift.entitlements";
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_ASSET_PATHS = "\"kokoro-swift/Preview Content\"";
+				DEVELOPMENT_TEAM = 6CGNH3LTV7;
+				ENABLE_HARDENED_RUNTIME = YES;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "com.iliasazonov.kokoro-swift";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Release;
+		};
+		49B7A24B2D7FB0E300B2BD45 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 6CGNH3LTV7;
+				GENERATE_INFOPLIST_FILE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 15.2;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "com.iliasazonov.kokoro-swiftTests";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/kokoro-swift.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/kokoro-swift";
+			};
+			name = Debug;
+		};
+		49B7A24C2D7FB0E300B2BD45 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 6CGNH3LTV7;
+				GENERATE_INFOPLIST_FILE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 15.2;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "com.iliasazonov.kokoro-swiftTests";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/kokoro-swift.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/kokoro-swift";
+			};
+			name = Release;
+		};
+		49B7A24E2D7FB0E300B2BD45 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 6CGNH3LTV7;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "com.iliasazonov.kokoro-swiftUITests";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TEST_TARGET_NAME = "kokoro-swift";
+			};
+			name = Debug;
+		};
+		49B7A24F2D7FB0E300B2BD45 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 6CGNH3LTV7;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "com.iliasazonov.kokoro-swiftUITests";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TEST_TARGET_NAME = "kokoro-swift";
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		49B7A21D2D7FB0E200B2BD45 /* Build configuration list for PBXProject "kokoro-swift" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				49B7A2452D7FB0E300B2BD45 /* Debug */,
+				49B7A2462D7FB0E300B2BD45 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		49B7A2472D7FB0E300B2BD45 /* Build configuration list for PBXNativeTarget "kokoro-swift" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				49B7A2482D7FB0E300B2BD45 /* Debug */,
+				49B7A2492D7FB0E300B2BD45 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		49B7A24A2D7FB0E300B2BD45 /* Build configuration list for PBXNativeTarget "kokoro-swiftTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				49B7A24B2D7FB0E300B2BD45 /* Debug */,
+				49B7A24C2D7FB0E300B2BD45 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		49B7A24D2D7FB0E300B2BD45 /* Build configuration list for PBXNativeTarget "kokoro-swiftUITests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				49B7A24E2D7FB0E300B2BD45 /* Debug */,
+				49B7A24F2D7FB0E300B2BD45 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 49B7A21A2D7FB0E200B2BD45 /* Project object */;
+}
