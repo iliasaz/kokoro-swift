@@ -1,0 +1,33 @@
+{
+  "originHash" : "d38810795d114a8d2000d47c98ed5c654fb5eb24f005df8ff0274894af7a7bd6",
+  "pins" : [
+    {
+      "identity" : "espeak-ng-spm",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/espeak-ng/espeak-ng-spm.git",
+      "state" : {
+        "branch" : "master",
+        "revision" : "37ee9f8ebcfac7a63615557a28095af2351e2b89"
+      }
+    },
+    {
+      "identity" : "mlx-swift",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/ml-explore/mlx-swift.git",
+      "state" : {
+        "revision" : "b990c58153af70eb0914bca7dd74401d341fa9ae",
+        "version" : "0.21.3"
+      }
+    },
+    {
+      "identity" : "swift-numerics",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/apple/swift-numerics",
+      "state" : {
+        "revision" : "e0ec0f5f3af6f3e4d5e7a19d2af26b481acb6ba8",
+        "version" : "1.0.3"
+      }
+    }
+  ],
+  "version" : 3
+}

@@ -6,6 +6,18 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		495640B82D9A17270038FC2F /* espeak-ng-data in Frameworks */ = {isa = PBXBuildFile; productRef = 495640B72D9A17270038FC2F /* espeak-ng-data */; };
+		495640BA2D9A17270038FC2F /* libespeak-ng in Frameworks */ = {isa = PBXBuildFile; productRef = 495640B92D9A17270038FC2F /* libespeak-ng */; };
+		49B7A2522D7FB13100B2BD45 /* MLX in Frameworks */ = {isa = PBXBuildFile; productRef = 49B7A2512D7FB13100B2BD45 /* MLX */; };
+		49B7A2542D7FB13100B2BD45 /* MLXFFT in Frameworks */ = {isa = PBXBuildFile; productRef = 49B7A2532D7FB13100B2BD45 /* MLXFFT */; };
+		49B7A2562D7FB13100B2BD45 /* MLXFast in Frameworks */ = {isa = PBXBuildFile; productRef = 49B7A2552D7FB13100B2BD45 /* MLXFast */; };
+		49B7A2582D7FB13100B2BD45 /* MLXLinalg in Frameworks */ = {isa = PBXBuildFile; productRef = 49B7A2572D7FB13100B2BD45 /* MLXLinalg */; };
+		49B7A25A2D7FB13100B2BD45 /* MLXNN in Frameworks */ = {isa = PBXBuildFile; productRef = 49B7A2592D7FB13100B2BD45 /* MLXNN */; };
+		49B7A25C2D7FB13100B2BD45 /* MLXOptimizers in Frameworks */ = {isa = PBXBuildFile; productRef = 49B7A25B2D7FB13100B2BD45 /* MLXOptimizers */; };
+		49B7A25E2D7FB13100B2BD45 /* MLXRandom in Frameworks */ = {isa = PBXBuildFile; productRef = 49B7A25D2D7FB13100B2BD45 /* MLXRandom */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXContainerItemProxy section */
 		49B7A2342D7FB0E300B2BD45 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -52,6 +64,15 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				495640B82D9A17270038FC2F /* espeak-ng-data in Frameworks */,
+				49B7A25C2D7FB13100B2BD45 /* MLXOptimizers in Frameworks */,
+				49B7A2562D7FB13100B2BD45 /* MLXFast in Frameworks */,
+				49B7A2582D7FB13100B2BD45 /* MLXLinalg in Frameworks */,
+				49B7A2522D7FB13100B2BD45 /* MLX in Frameworks */,
+				49B7A25A2D7FB13100B2BD45 /* MLXNN in Frameworks */,
+				49B7A2542D7FB13100B2BD45 /* MLXFFT in Frameworks */,
+				49B7A25E2D7FB13100B2BD45 /* MLXRandom in Frameworks */,
+				495640BA2D9A17270038FC2F /* libespeak-ng in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -112,6 +133,15 @@
 			);
 			name = "kokoro-swift";
 			packageProductDependencies = (
+				49B7A2512D7FB13100B2BD45 /* MLX */,
+				49B7A2532D7FB13100B2BD45 /* MLXFFT */,
+				49B7A2552D7FB13100B2BD45 /* MLXFast */,
+				49B7A2572D7FB13100B2BD45 /* MLXLinalg */,
+				49B7A2592D7FB13100B2BD45 /* MLXNN */,
+				49B7A25B2D7FB13100B2BD45 /* MLXOptimizers */,
+				49B7A25D2D7FB13100B2BD45 /* MLXRandom */,
+				495640B72D9A17270038FC2F /* espeak-ng-data */,
+				495640B92D9A17270038FC2F /* libespeak-ng */,
 			);
 			productName = "kokoro-swift";
 			productReference = 49B7A2222D7FB0E200B2BD45 /* kokoro-swift.app */;
@@ -195,6 +225,10 @@
 			);
 			mainGroup = 49B7A2192D7FB0E200B2BD45;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				49B7A2502D7FB13100B2BD45 /* XCRemoteSwiftPackageReference "mlx-swift" */,
+				495640B62D9A17270038FC2F /* XCRemoteSwiftPackageReference "espeak-ng-spm" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 49B7A2232D7FB0E200B2BD45 /* Products */;
 			projectDirPath = "";
@@ -549,6 +583,73 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		495640B62D9A17270038FC2F /* XCRemoteSwiftPackageReference "espeak-ng-spm" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/espeak-ng/espeak-ng-spm.git";
+			requirement = {
+				branch = master;
+				kind = branch;
+			};
+		};
+		49B7A2502D7FB13100B2BD45 /* XCRemoteSwiftPackageReference "mlx-swift" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/ml-explore/mlx-swift.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 0.21.3;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		495640B72D9A17270038FC2F /* espeak-ng-data */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 495640B62D9A17270038FC2F /* XCRemoteSwiftPackageReference "espeak-ng-spm" */;
+			productName = "espeak-ng-data";
+		};
+		495640B92D9A17270038FC2F /* libespeak-ng */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 495640B62D9A17270038FC2F /* XCRemoteSwiftPackageReference "espeak-ng-spm" */;
+			productName = "libespeak-ng";
+		};
+		49B7A2512D7FB13100B2BD45 /* MLX */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 49B7A2502D7FB13100B2BD45 /* XCRemoteSwiftPackageReference "mlx-swift" */;
+			productName = MLX;
+		};
+		49B7A2532D7FB13100B2BD45 /* MLXFFT */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 49B7A2502D7FB13100B2BD45 /* XCRemoteSwiftPackageReference "mlx-swift" */;
+			productName = MLXFFT;
+		};
+		49B7A2552D7FB13100B2BD45 /* MLXFast */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 49B7A2502D7FB13100B2BD45 /* XCRemoteSwiftPackageReference "mlx-swift" */;
+			productName = MLXFast;
+		};
+		49B7A2572D7FB13100B2BD45 /* MLXLinalg */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 49B7A2502D7FB13100B2BD45 /* XCRemoteSwiftPackageReference "mlx-swift" */;
+			productName = MLXLinalg;
+		};
+		49B7A2592D7FB13100B2BD45 /* MLXNN */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 49B7A2502D7FB13100B2BD45 /* XCRemoteSwiftPackageReference "mlx-swift" */;
+			productName = MLXNN;
+		};
+		49B7A25B2D7FB13100B2BD45 /* MLXOptimizers */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 49B7A2502D7FB13100B2BD45 /* XCRemoteSwiftPackageReference "mlx-swift" */;
+			productName = MLXOptimizers;
+		};
+		49B7A25D2D7FB13100B2BD45 /* MLXRandom */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 49B7A2502D7FB13100B2BD45 /* XCRemoteSwiftPackageReference "mlx-swift" */;
+			productName = MLXRandom;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 49B7A21A2D7FB0E200B2BD45 /* Project object */;
 }
