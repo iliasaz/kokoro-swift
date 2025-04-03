@@ -16,6 +16,7 @@
 		49B7A25A2D7FB13100B2BD45 /* MLXNN in Frameworks */ = {isa = PBXBuildFile; productRef = 49B7A2592D7FB13100B2BD45 /* MLXNN */; };
 		49B7A25C2D7FB13100B2BD45 /* MLXOptimizers in Frameworks */ = {isa = PBXBuildFile; productRef = 49B7A25B2D7FB13100B2BD45 /* MLXOptimizers */; };
 		49B7A25E2D7FB13100B2BD45 /* MLXRandom in Frameworks */ = {isa = PBXBuildFile; productRef = 49B7A25D2D7FB13100B2BD45 /* MLXRandom */; };
+		49CC76372D9E3D4A003E8AD1 /* README.md in Resources */ = {isa = PBXBuildFile; fileRef = 49CC76362D9E3D43003E8AD1 /* README.md */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -39,6 +40,7 @@
 		49B7A2222D7FB0E200B2BD45 /* kokoro-swift.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "kokoro-swift.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		49B7A2332D7FB0E300B2BD45 /* kokoro-swiftTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "kokoro-swiftTests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
 		49B7A23D2D7FB0E300B2BD45 /* kokoro-swiftUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "kokoro-swiftUITests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
+		49CC76362D9E3D43003E8AD1 /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -96,6 +98,7 @@
 		49B7A2192D7FB0E200B2BD45 = {
 			isa = PBXGroup;
 			children = (
+				49CC76362D9E3D43003E8AD1 /* README.md */,
 				49B7A2242D7FB0E200B2BD45 /* kokoro-swift */,
 				49B7A2362D7FB0E300B2BD45 /* kokoro-swiftTests */,
 				49B7A2402D7FB0E300B2BD45 /* kokoro-swiftUITests */,
@@ -246,6 +249,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				49CC76372D9E3D4A003E8AD1 /* README.md in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
