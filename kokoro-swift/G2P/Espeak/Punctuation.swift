@@ -49,7 +49,6 @@ class Punctuation {
             // Build a regular expression pattern that catches:
             // zero or more spaces, one or more punctuation marks (escaped), and zero or more spaces.
             let escapedMarks = NSRegularExpression.escapedPattern(for: _marks!)
-            let pattern = "(\\s*[\\(escapedMarks)]+\\s*)+"
             // Instead of string interpolation inside a bracket, we build the pattern:
             let finalPattern = "(\\s*[\(escapedMarks)]+\\s*)+"
             do {

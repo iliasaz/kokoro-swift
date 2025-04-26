@@ -81,7 +81,7 @@ class EspeakFallback {
 
      - Parameter british: A Boolean indicating whether to use British English phoneme mappings.
      */
-    init(british: Bool) {
+    init(british: Bool) throws {
         self.british = british
 
         // Set espeak-ng library and data paths.
@@ -89,7 +89,7 @@ class EspeakFallback {
         EspeakWrapper.setDataPath(path: EspeakngLoader.getDataPath())
 
         let language = british ? "en-gb" : "en-us"
-        self.backend = EspeakBackend(language: language, preservePunctuation: true, withStress: true, tie: "^")
+        try self.backend = EspeakBackend(language: language, preservePunctuation: true, withStress: true, tie: "^")
     }
 
     /**
@@ -172,9 +172,9 @@ class EspeakG2P {
 
      - Parameter language: A string representing the target language (e.g., "fr", "es").
      */
-    init(language: String) {
+    init(language: String) throws {
         self.language = language
-        self.backend = EspeakBackend(language: language, preservePunctuation: true, withStress: true, tie: "^", languageSwitch: "remove-flags")
+        try self.backend = EspeakBackend(language: language, preservePunctuation: true, withStress: true, tie: "^", languageSwitch: "remove-flags")
     }
 
     /**
