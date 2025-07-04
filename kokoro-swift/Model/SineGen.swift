@@ -29,8 +29,8 @@ class SineGen: Module {
     let voicedThreshold: Float
     let flagForPulse: Bool
     let upsampleScale: Float
-    @ModuleInfo var radInterpolate: Upsample
-    @ModuleInfo var phaseInterpolate: Upsample
+    var radInterpolate: Upsample
+    var phaseInterpolate: Upsample
 
     init(
         sampRate: Int,
@@ -69,19 +69,28 @@ class SineGen: Module {
         var radValues = (f0Values / Float(samplingRate)) % 1
 
         // Generate random phase noise (no noise for fundamental component)
-        var randIni = normal([f0Values.shape[0], f0Values.shape[2]])
+        let randIni = normal([f0Values.shape[0], f0Values.shape[2]])
         // Only zero out the first harmonic component
         // This preserves the random noise for higher harmonics while ensuring the fundamental frequency remains phase-aligned
         randIni[0..., 0] = MLX.zeros([randIni.shape[0]])
-        radValues[0, 0...] = radValues[0, 0...] + randIni
+        radValues[0 ..< radValues.shape[0], 0, 0 ..< radValues.shape[2]] = radValues[0 ..< radValues.shape[0], 0, 0 ..< radValues.shape[2]] + randIni
 
         if !flagForPulse {
-            radValues = self.radInterpolate(radValues.transposed(axes: [0, 2, 1]))
-                .transposed(axes: [0, 2, 1])
+            radValues = interpolate(
+              input: radValues.transposed(0, 2, 1),
+              scaleFactor: [1 / Float(upsampleScale)],
+              mode: "linear"
+            ).transposed(0, 2, 1)
 
-            var phase = MLX.cumsum(radValues, axis: 1) * Float(2.0 * .pi) * upsampleScale
-            phase = self.phaseInterpolate(phase.transposed(axes: [0, 2, 1]))
-                .transposed(axes: [0, 2, 1])
+            var phase = MLX.cumsum(radValues, axis: 1) * 2 * Float.pi
+
+            //            phase = self.phaseInterpolate(phase.transposed(axes: [0, 2, 1])).transposed(axes: [0, 2, 1])
+
+            phase = interpolate(
+              input: phase.transposed(0, 2, 1) * Float(upsampleScale),
+              scaleFactor: [Float(upsampleScale)],
+              mode: "linear"
+            ).transposed(0, 2, 1)
 
             return MLX.sin(phase)
 
@@ -92,10 +101,10 @@ class SineGen: Module {
             uv1[0..., -1, 0...] = MLX.ones([uv1.shape[0], uv1.shape[2]]) // Assigns 1.0 to the last time step for all batches
             let uLoc = (uv .< 1) * (uv1 .> 0)
 
-            var tmpCumsum = MLX.cumsum(radValues, axis: 1)
+            let tmpCumsum = MLX.cumsum(radValues, axis: 1)
 
             for idx in 0..<f0Values.shape[0] {
-                var tempSum = tmpCumsum[idx, uLoc[idx, 0..., 0...], 0...]
+                let tempSum = tmpCumsum[idx, uLoc[idx, 0..., 0...], 0...]
                 tempSum[1..., 0...] = tempSum[1..., 0...] - tempSum[0..<(tempSum.shape[0] - 1), 0...]
                 tmpCumsum[idx, 0..., 0...] = MLX.zeros(tmpCumsum[idx, 0..., 0...].shape)
                 tmpCumsum[idx, uLoc[idx, 0..., 0...], 0...] = tempSum
@@ -111,10 +120,8 @@ class SineGen: Module {
     /// - Parameter f0: Input F0 tensor of shape `(batch, length)`.
     /// - Returns: A tuple containing sine waveforms, voiced/unvoiced mask, and noise.
     func callAsFunction(f0: MLXArray) -> (MLXArray, MLXArray, MLXArray) {
-        var f0Buf = MLX.zeros([f0.shape[0], f0.shape[1], dim])
-
         // Fundamental frequency components with harmonics
-        let fn = f0 * MLXArray(1...(harmonicNum + 2)).reshaped([1, 1, harmonicNum + 1])
+        let fn = f0 * MLXArray(1...(harmonicNum + 1)).asType(.float32).reshaped([1, 1, harmonicNum + 1])
         // Generate sine waveforms
         let sineWaves = f02sine(fn) * sineAmp
 

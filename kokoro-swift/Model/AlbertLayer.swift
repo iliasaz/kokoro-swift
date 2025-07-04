@@ -45,19 +45,19 @@ import MLXNN
 ///     - Returns: A tensor of shape `[batchSize, seqLength, hiddenSize]`.
 
 class AlbertLayer: Module {
-    @ModuleInfo var attention: AlbertSelfAttention
-    @ModuleInfo var fullLayerLayerNorm: LayerNorm
-    @ModuleInfo var ffn: Linear
-    @ModuleInfo var ffnOutput: Linear
-    @ModuleInfo var activation: GELU
+    @ModuleInfo(key: "attention") var attention: AlbertSelfAttention
+    @ModuleInfo(key: "full_layer_layer_norm") var fullLayerLayerNorm: LayerNorm
+    @ModuleInfo(key: "ffn") var ffn: Linear
+    @ModuleInfo(key: "ffn_output") var ffnOutput: Linear
+    var activation: GELU
 
     init(config: AlbertModelArgs) {
-        super.init()
-        self.attention = AlbertSelfAttention(config: config)
-        self.fullLayerLayerNorm = LayerNorm(dimensions: config.hiddenSize, eps: config.layerNormEps)
-        self.ffn = Linear(config.hiddenSize, config.intermediateSize)
-        self.ffnOutput = Linear(config.intermediateSize, config.hiddenSize)
         self.activation = GELU()
+        self._attention.wrappedValue = AlbertSelfAttention(config: config)
+        self._fullLayerLayerNorm.wrappedValue = LayerNorm(dimensions: config.hiddenSize, eps: config.layerNormEps)
+        self._ffn.wrappedValue = Linear(config.hiddenSize, config.intermediateSize, zeroInitialized: true)
+        self._ffnOutput.wrappedValue = Linear(config.intermediateSize, config.hiddenSize, zeroInitialized: true)
+        super.init()
     }
 
     func callAsFunction(hiddenStates: MLXArray, attentionMask: MLXArray? = nil) -> MLXArray {

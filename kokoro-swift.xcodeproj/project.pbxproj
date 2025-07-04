@@ -17,6 +17,8 @@
 		49B7A25C2D7FB13100B2BD45 /* MLXOptimizers in Frameworks */ = {isa = PBXBuildFile; productRef = 49B7A25B2D7FB13100B2BD45 /* MLXOptimizers */; };
 		49B7A25E2D7FB13100B2BD45 /* MLXRandom in Frameworks */ = {isa = PBXBuildFile; productRef = 49B7A25D2D7FB13100B2BD45 /* MLXRandom */; };
 		49CC76372D9E3D4A003E8AD1 /* README.md in Resources */ = {isa = PBXBuildFile; fileRef = 49CC76362D9E3D43003E8AD1 /* README.md */; };
+		49F93D692DC046DC00366D2C /* MLXLMCommon in Frameworks */ = {isa = PBXBuildFile; productRef = 49F93D682DC046DC00366D2C /* MLXLMCommon */; };
+		49F93D6E2DC6C53500366D2C /* MLXLLM in Frameworks */ = {isa = PBXBuildFile; productRef = 49F93D6D2DC6C53500366D2C /* MLXLLM */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -66,6 +68,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				49F93D692DC046DC00366D2C /* MLXLMCommon in Frameworks */,
 				495640B82D9A17270038FC2F /* espeak-ng-data in Frameworks */,
 				49B7A25C2D7FB13100B2BD45 /* MLXOptimizers in Frameworks */,
 				49B7A2562D7FB13100B2BD45 /* MLXFast in Frameworks */,
@@ -74,6 +77,7 @@
 				49B7A25A2D7FB13100B2BD45 /* MLXNN in Frameworks */,
 				49B7A2542D7FB13100B2BD45 /* MLXFFT in Frameworks */,
 				49B7A25E2D7FB13100B2BD45 /* MLXRandom in Frameworks */,
+				49F93D6E2DC6C53500366D2C /* MLXLLM in Frameworks */,
 				495640BA2D9A17270038FC2F /* libespeak-ng in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -102,6 +106,7 @@
 				49B7A2242D7FB0E200B2BD45 /* kokoro-swift */,
 				49B7A2362D7FB0E300B2BD45 /* kokoro-swiftTests */,
 				49B7A2402D7FB0E300B2BD45 /* kokoro-swiftUITests */,
+				49F93D6C2DC6C53500366D2C /* Frameworks */,
 				49B7A2232D7FB0E200B2BD45 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -114,6 +119,13 @@
 				49B7A23D2D7FB0E300B2BD45 /* kokoro-swiftUITests.xctest */,
 			);
 			name = Products;
+			sourceTree = "<group>";
+		};
+		49F93D6C2DC6C53500366D2C /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Frameworks;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -145,6 +157,8 @@
 				49B7A25D2D7FB13100B2BD45 /* MLXRandom */,
 				495640B72D9A17270038FC2F /* espeak-ng-data */,
 				495640B92D9A17270038FC2F /* libespeak-ng */,
+				49F93D682DC046DC00366D2C /* MLXLMCommon */,
+				49F93D6D2DC6C53500366D2C /* MLXLLM */,
 			);
 			productName = "kokoro-swift";
 			productReference = 49B7A2222D7FB0E200B2BD45 /* kokoro-swift.app */;
@@ -231,6 +245,7 @@
 			packageReferences = (
 				49B7A2502D7FB13100B2BD45 /* XCRemoteSwiftPackageReference "mlx-swift" */,
 				495640B62D9A17270038FC2F /* XCRemoteSwiftPackageReference "espeak-ng-spm" */,
+				49F93D672DC046DC00366D2C /* XCRemoteSwiftPackageReference "mlx-swift-examples" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 49B7A2232D7FB0E200B2BD45 /* Products */;
@@ -605,6 +620,14 @@
 				minimumVersion = 0.21.3;
 			};
 		};
+		49F93D672DC046DC00366D2C /* XCRemoteSwiftPackageReference "mlx-swift-examples" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/ml-explore/mlx-swift-examples/";
+			requirement = {
+				branch = main;
+				kind = branch;
+			};
+		};
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
@@ -652,6 +675,16 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 49B7A2502D7FB13100B2BD45 /* XCRemoteSwiftPackageReference "mlx-swift" */;
 			productName = MLXRandom;
+		};
+		49F93D682DC046DC00366D2C /* MLXLMCommon */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 49F93D672DC046DC00366D2C /* XCRemoteSwiftPackageReference "mlx-swift-examples" */;
+			productName = MLXLMCommon;
+		};
+		49F93D6D2DC6C53500366D2C /* MLXLLM */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 49F93D672DC046DC00366D2C /* XCRemoteSwiftPackageReference "mlx-swift-examples" */;
+			productName = MLXLLM;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

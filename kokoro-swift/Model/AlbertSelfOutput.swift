@@ -32,18 +32,18 @@ import MLXNN
 class AlbertSelfOutput: Module {
     @ModuleInfo var dense: Linear
     @ModuleInfo var layerNorm: LayerNorm
-    @ModuleInfo var dropout: Dropout
+//    @ModuleInfo var dropout: Dropout
 
     init(config: AlbertModelArgs) {
         super.init()
-        self.dense = Linear(config.hiddenSize, config.hiddenSize)
+        self.dense = Linear(config.hiddenSize, config.hiddenSize, zeroInitialized: true)
         self.layerNorm = LayerNorm(dimensions: config.hiddenSize, eps: config.layerNormEps)
-        self.dropout = Dropout(p: config.hiddenDropoutProb)
+//        self.dropout = Dropout(p: config.hiddenDropoutProb)
     }
 
     func callAsFunction(hiddenStates: MLXArray, inputTensor: MLXArray) -> MLXArray {
         var output = dense(hiddenStates)
-        output = dropout(output)
+//        output = dropout(output)
         output = layerNorm(output + inputTensor)
         return output
     }

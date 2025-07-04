@@ -32,8 +32,8 @@ import MLXRandom
 class SourceModuleHnNSF: Module {
     let sineAmp: Float
     let noiseStd: Float
-    @ModuleInfo var sineGen: SineGen
-    @ModuleInfo var linearLayer: Linear
+    var sineGen: SineGen
+    @ModuleInfo(key: "l_linear") var linearLayer: Linear
 
     init(
         samplingRate: Int,
@@ -46,6 +46,9 @@ class SourceModuleHnNSF: Module {
         self.sineAmp = sineAmp
         self.noiseStd = addNoiseStd
 
+        // Linear layer to merge harmonic components into a single excitation signal
+        self._linearLayer.wrappedValue = Linear(harmonicNum + 1, 1, zeroInitialized: true)
+
         // Sine wave generator
         self.sineGen = SineGen(
             sampRate: samplingRate,
@@ -55,9 +58,6 @@ class SourceModuleHnNSF: Module {
             noiseStd: addNoiseStd,
             voicedThreshold: voicedThreshold
         )
-
-        // Linear layer to merge harmonic components into a single excitation signal
-        self.linearLayer = Linear(harmonicNum + 1, 1)
 
         super.init()
     }

@@ -9,9 +9,10 @@ import SwiftUI
 
 struct ContentView: View {
     @State private var text = """
-    Once upon a time, in a valley wrapped in mist and mystery, there was a little village where the stars whispered secrets to those who dared to listen. In this village lived a curious girl named Liora, who had a wild imagination and a knack for finding trouble—or maybe it just found her. Everyone said the woods beyond the hills were cursed, but Liora? She thought they looked like adventure.
+    Once upon a time, in a valley wrapped in mist and mystery, there was a little village where the stars whispered secrets to those who dared to listen.
     """
     @State private var result: String = ""
+    let kokoro = KokoroTTS()
 
     var body: some View {
         VStack {
@@ -20,13 +21,42 @@ struct ContentView: View {
                 getTokens()
             }
             Text(result)
+
+            Button("convert All") {
+                convert()
+            }
+
+            Button("load voices") {
+                loadSafeTensorVoices()
+            }
+
+            Button("speak") {
+                kokoro.speak(text: text, voice: .afAlloy)
+            }
         }
         .padding()
+        .task {
+            kokoro.loadVoices([.afAlloy])
+            kokoro.speak(text: text, voice: .afAlloy)
+        }
     }
 
     func getTokens() {
 //        pos()
         result = ""
+    }
+
+    func convert() {
+        let tts = KokoroTTS()
+        do {
+            try tts.convertAllVoices()
+        } catch {
+            print("error: \(error.localizedDescription)")
+        }
+    }
+
+    func loadSafeTensorVoices() {
+        kokoro.loadVoices([.afAlloy])
     }
 }
 

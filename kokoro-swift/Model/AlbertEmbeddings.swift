@@ -42,19 +42,20 @@ import MLXNN
 ///     - Returns a tensor containing the combined embeddings after applying layer normalization and dropout.
 
 class AlbertEmbeddings: Module {
-    @ModuleInfo var wordEmbeddings: Embedding
-    @ModuleInfo var positionEmbeddings: Embedding
-    @ModuleInfo var tokenTypeEmbeddings: Embedding
-    @ModuleInfo var layerNorm: LayerNorm
-    @ModuleInfo var dropout: Dropout
+    @ModuleInfo(key: "word_embeddings") var wordEmbeddings: Embedding
+    @ModuleInfo(key: "position_embeddings") var positionEmbeddings: Embedding
+    @ModuleInfo(key: "token_type_embeddings") var tokenTypeEmbeddings: Embedding
+    @ModuleInfo(key: "LayerNorm") var layerNorm: LayerNorm
+//    var dropout: Dropout
 
     init(config: AlbertModelArgs) {
+
+        self._wordEmbeddings.wrappedValue = Embedding(embeddingCount: config.vocabSize, dimensions: config.embeddingSize)
+        self._positionEmbeddings.wrappedValue = Embedding(embeddingCount: config.maxPositionEmbeddings, dimensions: config.embeddingSize)
+        self._tokenTypeEmbeddings.wrappedValue = Embedding(embeddingCount: config.typeVocabSize, dimensions: config.embeddingSize)
+        self._layerNorm.wrappedValue = LayerNorm(dimensions: config.embeddingSize, eps: config.layerNormEps)
+//        self.dropout = Dropout(p: config.hiddenDropoutProb)
         super.init()
-        self.wordEmbeddings = Embedding(embeddingCount: config.vocabSize, dimensions: config.embeddingSize)
-        self.positionEmbeddings = Embedding(embeddingCount: config.maxPositionEmbeddings, dimensions: config.embeddingSize)
-        self.tokenTypeEmbeddings = Embedding(embeddingCount: config.typeVocabSize, dimensions: config.embeddingSize)
-        self.layerNorm = LayerNorm(dimensions: config.embeddingSize, eps: config.layerNormEps)
-        self.dropout = Dropout(p: config.hiddenDropoutProb)
     }
 
     func callAsFunction(inputIds: MLXArray, tokenTypeIds: MLXArray? = nil, positionIds: MLXArray? = nil) -> MLXArray{
@@ -68,7 +69,7 @@ class AlbertEmbeddings: Module {
 
         var embeddings = wordsEmbeddings + positionEmbeddings + tokenTypeEmbeddings
         embeddings = layerNorm(embeddings)
-        embeddings = dropout(embeddings)
+//        embeddings = dropout(embeddings)
 
         return embeddings
     }

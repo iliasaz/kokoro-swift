@@ -11,13 +11,13 @@ import MLXNN
 
 class AlbertEncoder: Module {
     let config: AlbertModelArgs
-    @ModuleInfo var embeddingHiddenMappingIn: Linear
-    var albertLayerGroups: [AlbertLayerGroup]
+    @ModuleInfo(key: "embedding_hidden_mapping_in") var embeddingHiddenMappingIn: Linear
+    @ModuleInfo(key: "albert_layer_groups") var albertLayerGroups: [AlbertLayerGroup]
 
     init(config: AlbertModelArgs) {
         self.config = config
-        self.embeddingHiddenMappingIn = Linear(config.embeddingSize, config.hiddenSize)
-        self.albertLayerGroups = (0..<config.numHiddenGroups).map { _ in AlbertLayerGroup(config: config) }
+        self._embeddingHiddenMappingIn.wrappedValue = Linear(config.embeddingSize, config.hiddenSize, zeroInitialized: true)
+        self._albertLayerGroups.wrappedValue = (0..<config.numHiddenGroups).map { _ in AlbertLayerGroup(config: config) }
         super.init()
     }
 

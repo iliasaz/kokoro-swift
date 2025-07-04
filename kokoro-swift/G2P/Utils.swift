@@ -138,7 +138,7 @@ let ORDINALS: Set<String> = Set(["st", "nd", "rd", "th"])
 let ADD_SYMBOLS: [String: String] = [".": "dot", "/": "slash"]
 let SYMBOLS: [String: String] = ["%": "percent", "&": "and", "+": "plus", "@": "at"]
 
-let US_VOCAB: Set<Character> = Set("AIOWYbdfhijklmnpstuvwzæðŋɑɔəɛɜɡɪɹɾʃʊʌʒʤʧˈˌθᵊᵻ")
+let US_VOCAB: Set<Character> = Set("AIOWYbdfhijklmnpstuvwzæðŋɑɔəɛɜɡɪɹɾʃʊʌʒʤʧˈˌθᵊᵻʔ")
 let GB_VOCAB: Set<Character> = Set("AIQWYabdfhijklmnpstuvwzðŋɑɒɔəɛɜɡɪɹʃʊʌʒʤʧˈˌːθᵊ")
 
 let STRESSES = "ˌˈ"

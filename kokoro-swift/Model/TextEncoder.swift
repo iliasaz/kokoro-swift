@@ -8,6 +8,7 @@
 import Foundation
 import MLX
 import MLXNN
+import MLXFast
 
 /// `TextEncoder` is a neural network module that encodes text input into a continuous representation.
 /// It combines **embedding lookup**, **convolutional feature extraction**, and **bi-directional LSTM modeling**
@@ -54,48 +55,150 @@ import MLXNN
 ///     - Returns: Encoded feature tensor of shape `[batch, channels, max_seq_len]`.
 
 /// A convolutional block that consists of weight-normalized Conv1D, LayerNorm, an activation, and dropout.
-class ConvBlock: Module {
-    @ModuleInfo var conv: ConvWeighted
-    @ModuleInfo var norm: LayerNorm
-    @ModuleInfo var dropout: Dropout
-    let activation: (MLXArray) -> MLXArray  // Activation function
+//class ConvBlock: Module {
+//    var conv: ConvWeighted
+//    var norm: CustomLayerNorm
+////    var dropout: Dropout
+//    let activation: (MLXArray) -> MLXArray  // Activation function
+//
+//    init(channels: Int, kernelSize: Int, padding: Int, activation: @escaping (MLXArray) -> MLXArray) {
+//        self.conv = ConvWeighted(inChannels: channels, outChannels: channels, kernelSize: kernelSize, stride: 1, padding: padding)
+//        self.norm = CustomLayerNorm(dimensions: channels)
+////        self.dropout = Dropout(p: 0.2)
+//        self.activation = activation
+//        super.init()
+//    }
+//
+//    /// Forward pass for ConvBlock
+//    func callAsFunction(_ x: MLXArray) -> MLXArray {
+//        var x = x.transposed(axes: [0, 2, 1])  // Swap to (batch, seq_len, channels) for Conv1D
+//        x = conv(x: x, conv: MLX.conv1d)  // Apply weight-normalized convolution
+//        x = x.transposed(axes: [0, 2, 1])  // Swap back to (batch, channels, seq_len)
+//        x = norm(x)  // Apply layer normalization
+//        x = activation(x)  // Apply activation function
+////        return dropout(x)  // Apply dropout for regularization
+//        return x
+//    }
+//}
 
-    init(channels: Int, kernelSize: Int, padding: Int, activation: @escaping (MLXArray) -> MLXArray) {
-        self.conv = ConvWeighted(inChannels: channels, outChannels: channels, kernelSize: kernelSize, stride: 1, padding: padding)
-        self.norm = LayerNorm(dimensions: channels)
-        self.dropout = Dropout(p: 0.2)
-        self.activation = activation
-        super.init()
+/// The original Kokoro implementation uses a customer LayerNorm layer, which is basically the same as the defualt one
+/// except weight is called gamma, and bias is called beta.
+/// Hence, the parameters in the safetensors file have keys (gamma, beta)
+/// We could re-key the parameters, but this would require and extra processing time during the weight loading, which we want to avoid
+///
+class CustomLayerNorm: Module, UnaryLayer {
+
+    let dimensions: Int
+    let eps: Float
+
+    @ParameterInfo var gamma: MLXArray?
+    @ParameterInfo var beta: MLXArray?
+
+    /// Applies layer normalization [1] on the inputs.
+    ///
+    /// See [LayerNorm python docs](https://ml-explore.github.io/mlx/build/html/python/nn/_autosummary/mlx.nn.LayerNorm.html) for more information.
+    ///
+    /// ### References
+    /// 1. [https://arxiv.org/abs/1607.06450](https://arxiv.org/abs/1607.06450)
+    ///
+    /// - Parameters:
+    ///   - dimensions: number of features in the input
+    ///   - eps: value added to the denominator for numerical stability
+    ///   - affine: if `true` adds a trainable `weight` and `bias`
+    public init(dimensions: Int, eps: Float = 1e-5, affine: Bool = true) {
+        self.dimensions = dimensions
+        self.eps = eps
+
+        if affine {
+            self.gamma = MLXArray.ones([dimensions])
+            self.beta = MLXArray.zeros([dimensions])
+        } else {
+            self.gamma = nil
+            self.beta = nil
+        }
     }
 
-    /// Forward pass for ConvBlock
-    func callAsFunction(_ x: MLXArray) -> MLXArray {
-        var x = x.transposed(axes: [0, 2, 1])  // Swap to (batch, seq_len, channels) for Conv1D
-        x = conv(x: x, conv: MLX.conv1d)  // Apply weight-normalized convolution
-        x = x.transposed(axes: [0, 2, 1])  // Swap back to (batch, channels, seq_len)
-        x = norm(x)  // Apply layer normalization
-        x = activation(x)  // Apply activation function
-        return dropout(x)  // Apply dropout for regularization
+    open func callAsFunction(_ x: MLXArray) -> MLXArray {
+        MLXFast.layerNorm(x, weight: gamma, bias: beta, eps: eps)
     }
 }
 
+//class TextEncoder: Module {
+//    @ModuleInfo(key: "embedding") var embedding: Embedding
+//    @ModuleInfo(key: "cnn") var cnn: [ConvBlock]
+//    @ModuleInfo(key: "lstm") var lstm: BidirectionalLSTM
+//
+//    init(channels: Int, kernelSize: Int, depth: Int, nSymbols: Int, actv: @escaping (MLXArray) -> MLXArray = { MLXNN.leakyRelu($0, negativeSlope: 0.2) }) {
+//        self._embedding.wrappedValue = Embedding(embeddingCount: nSymbols, dimensions: channels)
+//        let padding = (kernelSize - 1) / 2
+//
+//        // Construct CNN blocks with weight-normalized convolutions
+//        self._cnn.wrappedValue = (0..<depth).map { _ in
+//            ConvBlock(channels: channels, kernelSize: kernelSize, padding: padding, activation: actv)
+//        }
+//
+//        self._lstm.wrappedValue = BidirectionalLSTM(inputSize: channels, hiddenSize: channels / 2)
+//
+//        super.init()
+//    }
+//
+//    func callAsFunction(x: MLXArray, inputLengths: MLXArray, m: MLXArray) -> MLXArray {
+//        // Step 1: Embedding Lookup
+//        var x = embedding(x)  // Convert input IDs into dense embeddings (batch, seq_len, channels)
+//        x = x.transposed(axes: [0, 2, 1])  // Swap to (batch, channels, seq_len)
+//
+//        // Step 2: Apply Mask (Zero out masked positions)
+//        let mExpanded = m.expandedDimensions(axis: 1)  // Expand mask for broadcasting
+//        x = MLX.where(mExpanded, 0.0, x)  // Zero out masked positions
+//
+//        // Step 3: Pass Through Convolutional Blocks
+//        for convBlock in cnn {
+//            x = convBlock(x)  // Apply CNN transformation
+//            x = MLX.where(mExpanded, 0.0, x)  // Reapply mask to maintain zeroing
+//        }
+//
+//        // Step 4: Prepare for LSTM (Swap sequence and channel dimensions)
+//        x = x.transposed(axes: [0, 2, 1])  // Convert to (batch, seq_len, channels) for LSTM
+//
+//        // Step 5: Apply LSTM and Extract Hidden States
+//        x = lstm(x).0  // Extract hidden states (ignore cell state)
+//
+//        // Step 6: Restore Shape After LSTM
+//        x = x.transposed(axes: [0, 2, 1])  // Convert back to (batch, channels, seq_len)
+//
+//        // Step 7: Pad Output to Maximum Sequence Length
+//        let xPad = MLX.zeros([x.shape[0], x.shape[1], m.shape.last!])  // Initialize zero tensor
+//        let sliceRange = 0..<x.shape.last!  // Get valid sequence range
+//        xPad[0..., 0..., sliceRange] = x  // Copy valid `x` into padded tensor
+//
+//        // Step 8: Apply Mask Again (Zero out invalid padded regions)
+//        return MLX.where(mExpanded, 0.0, xPad)
+//    }
+//}
+
+
 class TextEncoder: Module {
-    @ModuleInfo var embedding: Embedding
-    @ModuleInfo var cnn: [ConvBlock]
-    @ModuleInfo var lstm: BidirectionalLSTM
+    @ModuleInfo(key: "embedding") var embedding: Embedding
+    @ModuleInfo(key: "cnn") var cnn: [[Module]]
+    @ModuleInfo(key: "lstm") var lstm: BidirectionalLSTM
 
-    init(channels: Int, kernelSize: Int, depth: Int, nSymbols: Int, actv: @escaping (MLXArray) -> MLXArray = { MLXNN.leakyRelu($0, negativeSlope: 0.2) }) {
-        super.init()
-
-        self.embedding = Embedding(embeddingCount: nSymbols, dimensions: channels)
+    init(channels: Int, kernelSize: Int, depth: Int, nSymbols: Int, actv: Module = LeakyReLU(negativeSlope: 0.2)) {
+        self._embedding.wrappedValue = Embedding(embeddingCount: nSymbols, dimensions: channels)
         let padding = (kernelSize - 1) / 2
 
         // Construct CNN blocks with weight-normalized convolutions
-        self.cnn = (0..<depth).map { _ in
-            ConvBlock(channels: channels, kernelSize: kernelSize, padding: padding, activation: actv)
+        var cnnLayers = [[Module]]()
+        for _ in 0 ..< depth {
+            cnnLayers.append([
+                ConvWeighted(inChannels: channels, outChannels: channels, kernelSize: kernelSize, stride: 1, padding: padding),
+                CustomLayerNorm(dimensions: channels),
+                actv
+            ])
         }
 
-        self.lstm = BidirectionalLSTM(inputSize: channels, hiddenSize: channels / 2)
+        self._cnn.wrappedValue = cnnLayers
+        self._lstm.wrappedValue = BidirectionalLSTM(inputSize: channels, hiddenSize: channels / 2)
+        super.init()
     }
 
     func callAsFunction(x: MLXArray, inputLengths: MLXArray, m: MLXArray) -> MLXArray {
@@ -109,8 +212,22 @@ class TextEncoder: Module {
 
         // Step 3: Pass Through Convolutional Blocks
         for convBlock in cnn {
-            x = convBlock(x)  // Apply CNN transformation
-            x = MLX.where(mExpanded, 0.0, x)  // Reapply mask to maintain zeroing
+            for layer in convBlock {
+                if layer is ConvWeighted || layer is CustomLayerNorm {
+                    x = MLX.swappedAxes(x, 2, 1)
+                    if let conv = layer as? ConvWeighted {
+                        x = conv(x: x, conv: MLX.conv1d)
+                    } else if let norm = layer as? CustomLayerNorm {
+                        x = norm(x)
+                    }
+                    x = MLX.swappedAxes(x, 2, 1)
+                } else if let activation = layer as? LeakyReLU {
+                    x = activation(x)
+                } else {
+                    fatalError("Unsupported layer type: \(type(of: layer))")
+                }
+                x = MLX.where(mExpanded, 0.0, x)  // Reapply mask to maintain zeroing
+            }
         }
 
         // Step 4: Prepare for LSTM (Swap sequence and channel dimensions)

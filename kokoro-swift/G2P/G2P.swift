@@ -443,13 +443,95 @@ class G2P {
                 let (ps, rating) = self.lexicon(token: flatTokens[i], ctx: ctx)
                 flatTokens[i].phonemes = ps
                 flatTokens[i].rating = rating
+                if flatTokens[i].phonemes == nil, let fallback = self.fallback {
+                    let (ps, rating) = fallback(flatTokens[i])
+                    flatTokens[i].phonemes = ps
+                    flatTokens[i].rating = rating
+                }
             }
             ctx = G2P.tokenContext(ctx: ctx, ps: flatTokens[i].phonemes, token: flatTokens[i])
         }
-        tokens = flatTokens.map { token in
-            return MToken.mergeTokens([token], unk: self.unk)
+
+        var mergedTokens = [MToken]()
+        var currentGroup = [MToken]()
+
+        var j = 0
+        while j < flatTokens.count {
+            let token = flatTokens[j]
+            currentGroup.append(token)
+
+            if token.whitespace.isEmpty {
+                j += 1
+                continue
+            }
+
+            // finalize this group
+            if currentGroup.count == 1 {
+                mergedTokens.append(currentGroup[0])
+            } else {
+                // Try to resolve phonemes in the group
+                var left = 0
+                var right = currentGroup.count
+                var shouldFallback = false
+
+                while left < right {
+                    let groupSlice = Array(currentGroup[left..<right])
+                    let merged = MToken.mergeTokens(groupSlice, unk: self.unk)
+
+                    let (ps, rating) = self.lexicon(token: merged, ctx: ctx)
+
+                    if let ps = ps {
+                        // Assign merged result
+                        currentGroup[left].phonemes = ps
+                        currentGroup[left].rating = rating
+                        for k in (left+1)..<right {
+                            currentGroup[k].phonemes = ""
+                            currentGroup[k].rating = rating
+                        }
+                        ctx = G2P.tokenContext(ctx: ctx, ps: ps, token: merged)
+                        right = left
+                        left = 0
+                    } else if left + 1 < right {
+                        left += 1
+                    } else {
+                        right -= 1
+                        let lastToken = currentGroup[right]
+                        if lastToken.phonemes == nil {
+                            if lastToken.text.allSatisfy({ SUBTOKEN_JUNKS.contains($0) }) {
+                                currentGroup[right].phonemes = ""
+                                currentGroup[right].rating = 3
+                            } else if self.fallback != nil {
+                                shouldFallback = true
+                                break
+                            }
+                        }
+                        left = 0
+                    }
+                }
+
+                if shouldFallback, let fallback = self.fallback {
+                    let merged = MToken.mergeTokens(currentGroup, unk: self.unk)
+                    let (ps, rating) = fallback(merged)
+                    currentGroup[0].phonemes = ps
+                    currentGroup[0].rating = rating
+                    for k in 1..<currentGroup.count {
+                        currentGroup[k].phonemes = ""
+                        currentGroup[k].rating = rating
+                    }
+                } else {
+                    G2P.resolveTokens(tokens: &currentGroup)
+                }
+
+                // Finally merge the group into one
+                let merged = MToken.mergeTokens(currentGroup, unk: self.unk)
+                mergedTokens.append(merged)
+            }
+
+            currentGroup.removeAll()
+            j += 1
         }
-        let result = tokens.reduce("") { $0 + (( $1.phonemes ?? self.unk ) + $1.whitespace) }
-        return (result, tokens)
+
+        let result = mergedTokens.reduce("") { $0 + (( $1.phonemes ?? self.unk ) + $1.whitespace) }
+        return (result, mergedTokens)
     }
 }

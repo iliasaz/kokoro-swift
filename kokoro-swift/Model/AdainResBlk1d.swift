@@ -36,14 +36,13 @@ class AdainResBlk1d: Module {
     let shouldUpsamle: Bool
     let activation: (MLXArray) -> MLXArray
 
-    @ModuleInfo var upsample: UpSample1d
-    @ModuleInfo var conv1: ConvWeighted
-    @ModuleInfo var conv2: ConvWeighted
-    @ModuleInfo var norm1: AdaIN1d
-    @ModuleInfo var norm2: AdaIN1d
-    @ModuleInfo var dropout: Dropout
-    @ModuleInfo var pool: ConvWeighted?
-    @ModuleInfo var conv1x1: ConvWeighted?
+    var upsample: UpSample1d
+    @ModuleInfo(key: "conv1") var conv1: ConvWeighted
+    @ModuleInfo(key: "conv2") var conv2: ConvWeighted
+    @ModuleInfo(key: "norm1") var norm1: AdaIN1d
+    @ModuleInfo(key: "norm2") var norm2: AdaIN1d
+    @ModuleInfo(key: "pool") var pool: ConvWeighted?
+    @ModuleInfo(key: "conv1x1") var conv1x1: ConvWeighted?
 
     init(
         dimIn: Int,
@@ -51,7 +50,6 @@ class AdainResBlk1d: Module {
         styleDim: Int = 64,
         activation: @escaping (MLXArray) -> MLXArray = { MLXNN.leakyRelu($0, negativeSlope: 0.2) },
         upsample: Bool = false,
-        dropoutP: Float = 0.0,
         bias: Bool = false
     ) {
         self.dimIn = dimIn
@@ -61,22 +59,21 @@ class AdainResBlk1d: Module {
         self.activation = activation
 
         self.upsample = UpSample1d(upsample: upsample)
-        self.conv1 = ConvWeighted(inChannels: dimIn, outChannels: dimOut, kernelSize: 3, stride: 1, padding: 1)
-        self.conv2 = ConvWeighted(inChannels: dimOut, outChannels: dimOut, kernelSize: 3, stride: 1, padding: 1)
-        self.norm1 = AdaIN1d(styleDim: styleDim, numFeatures: dimIn)
-        self.norm2 = AdaIN1d(styleDim: styleDim, numFeatures: dimOut)
-        self.dropout = Dropout(p: dropoutP)
+        self._conv1.wrappedValue = ConvWeighted(inChannels: dimIn, outChannels: dimOut, kernelSize: 3, stride: 1, padding: 1)
+        self._conv2.wrappedValue = ConvWeighted(inChannels: dimOut, outChannels: dimOut, kernelSize: 3, stride: 1, padding: 1)
+        self._norm1.wrappedValue = AdaIN1d(styleDim: styleDim, numFeatures: dimIn)
+        self._norm2.wrappedValue = AdaIN1d(styleDim: styleDim, numFeatures: dimOut)
 
         if upsample {
-            self.pool = ConvWeighted(inChannels: 1, outChannels: dimIn, kernelSize: 3, stride: 2, padding: 1, groups: dimIn)
+            self._pool.wrappedValue = ConvWeighted(inChannels: 1, outChannels: dimIn, kernelSize: 3, stride: 2, padding: 1, groups: dimIn)
         } else {
-            self.pool = nil
+            self._pool.wrappedValue = nil
         }
 
         if learnedShortcut {
-            self.conv1x1 = ConvWeighted(inChannels: dimIn, outChannels: dimOut, kernelSize: 1, stride: 1, padding: 0, bias: false)
+            self._conv1x1.wrappedValue = ConvWeighted(inChannels: dimIn, outChannels: dimOut, kernelSize: 1, stride: 1, padding: 0, bias: false)
         } else {
-            self.conv1x1 = nil
+            self._conv1x1.wrappedValue = nil
         }
 
         super.init()
@@ -103,22 +100,19 @@ class AdainResBlk1d: Module {
 
         if shouldUpsamle, let pool = pool {
             x = x.transposed(axes: [0, 2, 1])
-            x = pool(x: x, conv: convTransposed1d)
+            x = pool(x: x, conv: convTransposed1d_wrapped)
             x = padded(x, widths: [IntOrPair((0, 0)), IntOrPair((1, 0)), IntOrPair((0, 0))])
             x = x.transposed(axes: [0, 2, 1])
         }
 
         x = x.transposed(axes: [0, 2, 1])
-        x = conv1(x: dropout(x), conv: MLX.conv1d)
+        x = conv1(x: x, conv: MLX.conv1d)
         x = x.transposed(axes: [0, 2, 1])
-
         x = norm2(x: x, s: s)
         x = activation(x)
-
         x = x.transposed(axes: [0, 2, 1])
         x = conv2(x: x, conv: MLX.conv1d)
         x = x.transposed(axes: [0, 2, 1])
-
         return x
     }
 

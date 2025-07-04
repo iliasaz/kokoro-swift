@@ -17,12 +17,12 @@ import MLXNN
 /// - The `decode` step refines the processed features.
 /// - The `generator` synthesizes the final waveform using the learned representations.
 class Decoder: Module {
-    @ModuleInfo var encode: AdainResBlk1d
-    @ModuleInfo var decodeLayers: [AdainResBlk1d]
-    @ModuleInfo var f0Conv: ConvWeighted
-    @ModuleInfo var nConv: ConvWeighted
-    @ModuleInfo var asrResConv: ConvWeighted
-    @ModuleInfo var generator: Generator
+    @ModuleInfo(key: "encode") var encode: AdainResBlk1d
+    @ModuleInfo(key: "decode") var decodeLayers: [AdainResBlk1d]
+    @ModuleInfo(key: "F0_conv") var f0Conv: ConvWeighted
+    @ModuleInfo(key: "N_conv") var nConv: ConvWeighted
+    @ModuleInfo(key: "asr_res") var asrResConv: [ConvWeighted]
+    @ModuleInfo(key: "generator") var generator: Generator
 
     init(
         dimIn: Int,
@@ -37,10 +37,10 @@ class Decoder: Module {
         genISTFTHopSize: Int
     ) {
         // Initial encoding block
-        self.encode = AdainResBlk1d(dimIn: dimIn + 2, dimOut: 1024, styleDim: styleDim)
+        self._encode.wrappedValue = AdainResBlk1d(dimIn: dimIn + 2, dimOut: 1024, styleDim: styleDim)
 
         // Sequential decoding layers
-        self.decodeLayers = [
+        self._decodeLayers.wrappedValue = [
             AdainResBlk1d(dimIn: 1024 + 2 + 64, dimOut: 1024, styleDim: styleDim),
             AdainResBlk1d(dimIn: 1024 + 2 + 64, dimOut: 1024, styleDim: styleDim),
             AdainResBlk1d(dimIn: 1024 + 2 + 64, dimOut: 1024, styleDim: styleDim),
@@ -48,14 +48,14 @@ class Decoder: Module {
         ]
 
         // F0 and Noise convolutions for signal conditioning
-        self.f0Conv = ConvWeighted(inChannels: 1, outChannels: 1, kernelSize: 3, stride: 2, padding: 1, groups: 1)
-        self.nConv = ConvWeighted(inChannels: 1, outChannels: 1, kernelSize: 3, stride: 2, padding: 1, groups: 1)
+        self._f0Conv.wrappedValue = ConvWeighted(inChannels: 1, outChannels: 1, kernelSize: 3, stride: 2, padding: 1, groups: 1)
+        self._nConv.wrappedValue = ConvWeighted(inChannels: 1, outChannels: 1, kernelSize: 3, stride: 2, padding: 1, groups: 1)
 
         // ASR residual transformation
-        self.asrResConv = ConvWeighted(inChannels: 512, outChannels: 64, kernelSize: 1, padding: 0)
+        self._asrResConv.wrappedValue = [ConvWeighted(inChannels: 512, outChannels: 64, kernelSize: 1, padding: 0)]
 
         // Generator for final waveform synthesis
-        self.generator = Generator(
+        self._generator.wrappedValue = Generator(
             styleDim: styleDim,
             resblockKernelSizes: resblockKernelSizes,
             upsampleRates: upsampleRates,
@@ -65,25 +65,39 @@ class Decoder: Module {
             genISTFTNFFT: genISTFTNFFT,
             genISTFTHopSize: genISTFTHopSize
         )
-
         super.init()
     }
 
     func callAsFunction(asr: MLXArray, f0Curve: MLXArray, n: MLXArray, s: MLXArray) -> MLXArray {
         // Process F0 and Noise signals
+//        let loadedF0Curve: MLXArray
+//        do {
+//            print("loading F0Curve from /Users/ilia/Downloads/F0Curve.safetensors")
+//            loadedF0Curve = try MLX.loadArrays(url: URL(fileURLWithPath: "/Users/ilia/Downloads/F0Curve.safetensors"))["F0Curve"]!
+//        } catch {
+//            fatalError("could not load F0Curve")
+//        }
+//        var f0 = loadedF0Curve.expandedDimensions(axis: 1).transposed(axes: [0, 2, 1])
+
         var f0 = f0Curve.expandedDimensions(axis: 1).transposed(axes: [0, 2, 1])
+
         f0 = f0Conv(x: f0, conv: conv1d).transposed(axes: [0, 2, 1])
 
+//        let n0 = MLX.zeros(like: n)
+//        var n = n0.expandedDimensions(axis: 1).transposed(axes: [0, 2, 1])
         var n = n.expandedDimensions(axis: 1).transposed(axes: [0, 2, 1])
         n = nConv(x: n, conv: conv1d).transposed(axes: [0, 2, 1])
 
         // Concatenate ASR, F0, and Noise inputs
         var x = MLX.concatenated([asr, f0, n], axis: 1)
+
+        print("before encode: \(x.mean().item(Float.self)), \(x.max().item(Float.self))")
         x = encode(x, s: s)
+        print("after encode mean/max:", x.mean().item(Float.self), x.max().item(Float.self))
 
         // Process ASR residuals
         var asrRes = asr.transposed(axes: [0, 2, 1])
-        asrRes = asrResConv(x: asrRes, conv: conv1d).transposed(axes: [0, 2, 1])
+        asrRes = asrResConv[0](x: asrRes, conv: conv1d).transposed(axes: [0, 2, 1])
 
         var residualConnection = true
         for block in decodeLayers {
@@ -97,10 +111,12 @@ class Decoder: Module {
                 residualConnection = false
             }
         }
-
+        print("before generator mean/max:", x.mean(), x.max())
         // Pass through the generator for final waveform output
-        x = generator(x: x, style: s, f0: f0Curve)
-        return x
+        let audio = generator(x: x, style: s, f0: f0Curve)
+//        let audio = generator(x: x, style: s, f0: loadedF0Curve)
+
+        return audio
     }
 
     /// Handles weight sanitization for compatibility with different model versions.

@@ -40,20 +40,20 @@ import MLXNN
 
 class CustomAlbert: Module {
     let config: AlbertModelArgs
-    @ModuleInfo var embeddings: AlbertEmbeddings
-    @ModuleInfo var encoder: AlbertEncoder
-    @ModuleInfo var pooler: Linear
+    @ModuleInfo(key: "embeddings") var embeddings: AlbertEmbeddings
+    @ModuleInfo(key: "encoder") var encoder: AlbertEncoder
+    @ModuleInfo(key: "pooler") var pooler: Linear
 
     init(config: AlbertModelArgs) {
         self.config = config
-        self.embeddings = AlbertEmbeddings(config: config)
-        self.encoder = AlbertEncoder(config: config)
-        self.pooler = Linear(config.hiddenSize, config.hiddenSize)
+        self._embeddings.wrappedValue = AlbertEmbeddings(config: config)
+        self._encoder.wrappedValue = AlbertEncoder(config: config)
+        self._pooler.wrappedValue = Linear(config.hiddenSize, config.hiddenSize, zeroInitialized: true)
         super.init()
     }
 
     func callAsFunction(inputIds: MLXArray, tokenTypeIds: MLXArray? = nil, attentionMask: MLXArray? = nil) -> (MLXArray, MLXArray) {
-        var embeddingOutput = embeddings(inputIds: inputIds, tokenTypeIds: tokenTypeIds)
+        let embeddingOutput = embeddings(inputIds: inputIds, tokenTypeIds: tokenTypeIds)
 
         var processedAttentionMask: MLXArray? = nil
         if let mask = attentionMask {

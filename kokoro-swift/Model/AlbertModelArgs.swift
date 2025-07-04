@@ -7,7 +7,7 @@
 
 import Foundation
 
-struct AlbertModelArgs {
+struct AlbertModelArgs: Codable {
     let numHiddenLayers: Int
     let numAttentionHeads: Int
     let hiddenSize: Int
@@ -26,11 +26,11 @@ struct AlbertModelArgs {
     let dropout: Float
 
     init(
-        numHiddenLayers: Int,
-        numAttentionHeads: Int,
-        hiddenSize: Int,
-        intermediateSize: Int,
-        maxPositionEmbeddings: Int,
+        numHiddenLayers: Int = 12,
+        numAttentionHeads: Int = 12,
+        hiddenSize: Int = 768,
+        intermediateSize: Int = 2048,
+        maxPositionEmbeddings: Int = 512,
         modelType: String = "albert",
         embeddingSize: Int = 128,
         innerGroupNum: Int = 1,
@@ -40,8 +40,8 @@ struct AlbertModelArgs {
         typeVocabSize: Int = 2,
         initializerRange: Float = 0.02,
         layerNormEps: Float = 1e-12,
-        vocabSize: Int = 30522,
-        dropout: Float = 0.0
+        vocabSize: Int = 178,
+        dropout: Float = 0.2
     ) {
         self.numHiddenLayers = numHiddenLayers
         self.numAttentionHeads = numAttentionHeads

@@ -41,12 +41,12 @@ import MLXNN
 ///     - Returns: The adapted tensor after applying style-based normalization.
 
 class AdaIN1d: Module {
-    @ModuleInfo var norm: InstanceNorm
-    @ModuleInfo var fc: Linear
+    var norm: InstanceNorm
+    @ModuleInfo(key: "fc") var fc: Linear
 
     init(styleDim: Int, numFeatures: Int) {
-        self.norm = InstanceNorm(numFeatures: numFeatures, affine: false)
-        self.fc = Linear(styleDim, numFeatures * 2)
+        self.norm = InstanceNorm(dimensions: numFeatures, affine: false)
+        self._fc.wrappedValue = Linear(styleDim, numFeatures * 2, zeroInitialized: true)
         super.init()
     }
 
@@ -57,14 +57,7 @@ class AdaIN1d: Module {
 
         // Split into gamma and beta
         let (gamma, beta) = h.split(axis: 1)
-
-        // Apply adaptive normalization
-        do {
-            let x = try (1 + gamma) * norm(x) + beta
-            return x
-        } catch {
-            fatalError("Unhandled error in AdaIN1d: \(error)")
-        }
+        return (1 + gamma) * norm(x.swappedAxes(1, 2)).swappedAxes(1, 2) + beta
     }
 }
 

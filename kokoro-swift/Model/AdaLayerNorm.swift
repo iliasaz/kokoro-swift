@@ -51,7 +51,7 @@ class AdaLayerNorm: Module {
     init(styleDim: Int, channels: Int, eps: Float = 1e-5) {
         self.channels = channels
         self.eps = eps
-        self.fc = Linear(styleDim, channels * 2)
+        self.fc = Linear(styleDim, channels * 2, zeroInitialized: true)
         super.init()
     }
 
@@ -72,8 +72,7 @@ class AdaLayerNorm: Module {
         let mean = x.mean(axis: -1, keepDims: true)
         let variance = x.variance(axis: -1, keepDims: true)
         let normalizedX = (x - mean) / MLX.sqrt(variance + eps)
-
         // Apply adaptive scaling and shifting.
-        return (1 + gamma) * normalizedX + beta
+        return (1.0 + gamma) * normalizedX + beta
     }
 }

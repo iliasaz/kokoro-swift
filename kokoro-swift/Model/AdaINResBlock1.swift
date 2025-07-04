@@ -58,29 +58,42 @@ import MLXNN
 ///     - Returns: The transformed tensor after feature modulation and convolution.
 
 class AdaINResBlock1: Module {
-    @ModuleInfo var convs1: [ConvWeighted] = []
-    @ModuleInfo var convs2: [ConvWeighted] = []
-    @ModuleInfo var adain1: [AdaIN1d] = []
-    @ModuleInfo var adain2: [AdaIN1d] = []
-    var alpha1: [MLXArray] = []
-    var alpha2: [MLXArray] = []
+    @ModuleInfo var convs1: [ConvWeighted]
+    @ModuleInfo var convs2: [ConvWeighted]
+    @ModuleInfo var adain1: [AdaIN1d]
+    @ModuleInfo var adain2: [AdaIN1d]
+    @ParameterInfo var alpha1: [MLXArray]
+    @ParameterInfo var alpha2: [MLXArray]
 
     init(channels: Int, kernelSize: Int = 3, dilation: [Int] = [1, 3, 5], styleDim: Int = 64) {
-        super.init()
+        var convs1Local = [ConvWeighted]()
+        var convs2Local = [ConvWeighted]()
+        var adain1Local = [AdaIN1d]()
+        var adain2Local = [AdaIN1d]()
+        var alpha1Local = [MLXArray]()
+        var alpha2Local = [MLXArray]()
 
         for i in 0..<3 {
             let padding1 = getPadding(kernelSize: kernelSize, dilation: dilation[i])
             let padding2 = getPadding(kernelSize: kernelSize, dilation: 1)
 
-            convs1.append(ConvWeighted(inChannels: channels, outChannels: channels, kernelSize: kernelSize, stride: 1, padding: padding1, dilation: dilation[i]))
-            convs2.append(ConvWeighted(inChannels: channels, outChannels: channels, kernelSize: kernelSize, stride: 1, padding: padding2, dilation: 1))
+            convs1Local.append(ConvWeighted(inChannels: channels, outChannels: channels, kernelSize: kernelSize, stride: 1, padding: padding1, dilation: dilation[i]))
+            convs2Local.append(ConvWeighted(inChannels: channels, outChannels: channels, kernelSize: kernelSize, stride: 1, padding: padding2, dilation: 1))
 
-            adain1.append(AdaIN1d(styleDim: styleDim, numFeatures: channels))
-            adain2.append(AdaIN1d(styleDim: styleDim, numFeatures: channels))
+            adain1Local.append(AdaIN1d(styleDim: styleDim, numFeatures: channels))
+            adain2Local.append(AdaIN1d(styleDim: styleDim, numFeatures: channels))
 
-            alpha1.append(MLX.ones([1, channels, 1]))
-            alpha2.append(MLX.ones([1, channels, 1]))
+            alpha1Local.append(MLX.ones([1, channels, 1]))
+            alpha2Local.append(MLX.ones([1, channels, 1]))
         }
+        _convs1.wrappedValue = convs1Local
+        _convs2.wrappedValue = convs2Local
+        _adain1.wrappedValue = adain1Local
+        _adain2.wrappedValue = adain2Local
+        _alpha1.wrappedValue = alpha1Local
+        _alpha2.wrappedValue = alpha2Local
+
+        super.init()
     }
 
     func callAsFunction(x: MLXArray, s: MLXArray) -> MLXArray {
@@ -106,8 +119,8 @@ class AdaINResBlock1: Module {
 
         return x
     }
+}
 
-    private func getPadding(kernelSize: Int, dilation: Int) -> Int {
-        return (kernelSize - 1) * dilation / 2
-    }
+public func getPadding(kernelSize: Int, dilation: Int) -> Int {
+    return (kernelSize - 1) * dilation / 2
 }

@@ -26,10 +26,10 @@ import MLXNN
 ///     - Returns the transformed tensor after all layers have been applied.
 
 class AlbertLayerGroup: Module {
-    var albertLayers: [AlbertLayer]
+    @ModuleInfo(key: "albert_layers") var albertLayers: [AlbertLayer]
 
     init(config: AlbertModelArgs) {
-        self.albertLayers = (0..<config.innerGroupNum).map { _ in AlbertLayer(config: config) }
+        self._albertLayers.wrappedValue = (0..<config.innerGroupNum).map { _ in AlbertLayer(config: config) }
         super.init()
     }
 

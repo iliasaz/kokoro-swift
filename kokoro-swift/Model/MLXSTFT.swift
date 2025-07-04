@@ -8,7 +8,6 @@
 import Foundation
 import MLX
 import MLXNN
-import MLXFFT
 import ComplexModule
 
 /// A Short-Time Fourier Transform (STFT) module for audio processing.
@@ -210,7 +209,7 @@ class MLXSTFT {
         for batchIdx in 0..<audioData.shape[0] {
             let audioSlice = audioData[batchIdx]
 
-            // Compute STFT using MLX API (hypothetical function, replace with real STFT implementation)
+            // Compute STFT using MLX API
             let stftResult = mlxSTFT(
                 x: audioSlice,
                 nFFT: filterLength,
@@ -221,7 +220,8 @@ class MLXSTFT {
 
             // Compute magnitude and phase
             let magnitude = MLX.abs(stftResult)
-            let phase = MLX.atan(stftResult)
+//            let phase = MLX.atan(stftResult)
+            let phase = MLX.atan2(stftResult.imaginaryPart(), stftResult.realPart())
 
             magnitudes.append(magnitude)
             phases.append(phase)

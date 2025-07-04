@@ -12,15 +12,15 @@ import MLXNN
 /// This model uses a series of convolutional, upsampling, and adaptive normalization layers
 /// to generate high-quality speech signals from learned representations.
 class Generator: Module {
-    @ModuleInfo var sourceModule: SourceModuleHnNSF
+    @ModuleInfo(key: "m_source") var sourceModule: SourceModuleHnNSF
     @ModuleInfo var f0Upsample: Upsample
-    @ModuleInfo var upsampleLayers: [ConvWeighted]
-    @ModuleInfo var resBlocks: [AdaINResBlock1]
-    @ModuleInfo var noiseConvs: [Conv1d]
-    @ModuleInfo var noiseRes: [AdaINResBlock1]
-    @ModuleInfo var convPost: ConvWeighted
-    @ModuleInfo var reflectionPad: ReflectionPad1d
-    @ModuleInfo var stft: MLXSTFT
+    @ModuleInfo(key: "ups") var upsampleLayers: [ConvWeighted]
+    @ModuleInfo(key: "resblocks") var resBlocks: [AdaINResBlock1]
+    @ModuleInfo(key: "noise_convs") var noiseConvs: [Conv1d]
+    @ModuleInfo(key: "noise_res") var noiseRes: [AdaINResBlock1]
+    @ModuleInfo(key: "conv_post") var convPost: ConvWeighted
+    var reflectionPad: ReflectionPad1d
+    var stft: MLXSTFT
 
     let numKernels: Int
     let numUpsamples: Int
@@ -41,7 +41,7 @@ class Generator: Module {
         self.postNFFT = genISTFTNFFT
 
         // Source module for harmonic-plus-noise source modeling
-        self.sourceModule = SourceModuleHnNSF(
+        self._sourceModule.wrappedValue = SourceModuleHnNSF(
             samplingRate: 24000,
             upsampleScale: Float(upsampleRates.reduce(1, *) * genISTFTHopSize),
             harmonicNum: 8,
@@ -64,32 +64,34 @@ class Generator: Module {
             upsampleLayers.append(
                 ConvWeighted(inChannels: inChannels, outChannels: outChannels, kernelSize: k, stride: u, padding: (k - u) / 2, encode: true)
             )
+        }
+        self._upsampleLayers.wrappedValue = upsampleLayers
 
+        for i in 0 ..< upsampleLayers.count {
+            let ch = upsampleInitialChannel / (1 << (i + 1))
             for (k, d) in zip(resblockKernelSizes, resblockDilationSizes) {
-                resBlocks.append(AdaINResBlock1(channels: inChannels, kernelSize: k, dilation: d, styleDim: styleDim))
+                resBlocks.append(AdaINResBlock1(channels: ch, kernelSize: k, dilation: d, styleDim: styleDim))
             }
 
-            let cCur = upsampleInitialChannel / (1 << (i + 1))
             if i + 1 < numUpsamples {
                 let strideF0 = upsampleRates[(i + 1)...].reduce(1, *)
                 noiseConvs.append(
-                    Conv1d(inputChannels: genISTFTNFFT + 2, outputChannels: cCur, kernelSize: strideF0 * 2, stride: strideF0, padding: (strideF0 + 1) / 2)
+                    Conv1d(inputChannels: genISTFTNFFT + 2, outputChannels: ch, kernelSize: strideF0 * 2, stride: strideF0, padding: (strideF0 + 1) / 2)
                 )
-                noiseRes.append(AdaINResBlock1(channels: cCur, kernelSize: 7, dilation: [1, 3, 5], styleDim: styleDim))
+                noiseRes.append(AdaINResBlock1(channels: ch, kernelSize: 7, dilation: [1, 3, 5], styleDim: styleDim))
             } else {
-                noiseConvs.append(Conv1d(inputChannels: genISTFTNFFT + 2, outputChannels: cCur, kernelSize: 1))
-                noiseRes.append(AdaINResBlock1(channels: cCur, kernelSize: 11, dilation: [1, 3, 5], styleDim: styleDim))
+                noiseConvs.append(Conv1d(inputChannels: genISTFTNFFT + 2, outputChannels: ch, kernelSize: 1))
+                noiseRes.append(AdaINResBlock1(channels: ch, kernelSize: 11, dilation: [1, 3, 5], styleDim: styleDim))
             }
         }
 
-        self.upsampleLayers = upsampleLayers
-        self.resBlocks = resBlocks
-        self.noiseConvs = noiseConvs
-        self.noiseRes = noiseRes
+        self._resBlocks.wrappedValue = resBlocks
+        self._noiseConvs.wrappedValue = noiseConvs
+        self._noiseRes.wrappedValue = noiseRes
 
         // Post-processing layers
         let lastChannel = upsampleInitialChannel / (1 << numUpsamples)
-        self.convPost = ConvWeighted(inChannels: lastChannel, outChannels: genISTFTNFFT + 2, kernelSize: 7, stride: 1, padding: 3)
+        self._convPost.wrappedValue = ConvWeighted(inChannels: lastChannel, outChannels: genISTFTNFFT + 2, kernelSize: 7, stride: 1, padding: 3)
         self.reflectionPad = ReflectionPad1d(padding: (1, 0))
 
         // Short-time Fourier Transform module
@@ -103,6 +105,8 @@ class Generator: Module {
     }
 
     func callAsFunction(x: MLXArray, style: MLXArray, f0: MLXArray) -> MLXArray {
+        print("generator inputs. x shape: \(x.shape), mean: \(x.mean().item(Float.self)), max: \(x.max().item(Float.self))\n style shape: \(style.shape), mean: \(style.mean().item(Float.self)), max: \(style.max().item(Float.self))\n f0 shape: \(f0.shape), mean: \(f0.mean().item(Float.self)), max: \(f0.max().item(Float.self))")
+
         // Step 1: Upsample f0
         var f0 = f0.expandedDimensions(axis: 1).transposed(axes: [0, 2, 1])
         f0 = f0Upsample(f0)
@@ -111,8 +115,12 @@ class Generator: Module {
         var (harSource, _, _) = sourceModule(f0)
         harSource = harSource.transposed(axes: [0, 2, 1]).squeezed(axis: 1)
         let (harSpec, harPhase) = stft.transform(harSource)
-        var har = MLX.concatenated([harSpec, harPhase], axis: 1).transposed(axes: [0, 2, 1])
+
+        let har = MLX.concatenated([harSpec, harPhase], axis: 1).transposed(axes: [0, 2, 1])
         var x = x
+
+        print("stage0  x mean/max", x.mean(), x.max())
+
         for i in 0..<numUpsamples {
             x = leakyRelu(x, negativeSlope: 0.1)
 
@@ -120,16 +128,23 @@ class Generator: Module {
             xSource = noiseRes[i](x: xSource, s: style)
 
             x = x.transposed(axes: [0, 2, 1])
-            x = upsampleLayers[i](x: x, conv: MLX.convTransposed1d).transposed(axes: [0, 2, 1])
+            x = upsampleLayers[i](x: x, conv: convTransposed1d_wrapped)
+            x = x.transposed(axes: [0, 2, 1])
+
+            print("up\(i)  after upsample mean/max:", x.mean(), x.max())
 
             if i == numUpsamples - 1 {
                 x = reflectionPad(x)
             }
+
+            print("up\(i)  xSource mean/max:", xSource.mean(), xSource.max())
+
             x += xSource
 
             var xs: MLXArray?
             for j in 0..<numKernels {
                 let resBlockOut = resBlocks[i * numKernels + j](x: x, s: style)
+                print("up\(i) res\(j) mean/max:", resBlockOut.mean(), resBlockOut.max())
                 xs = xs.map { $0 + resBlockOut } ?? resBlockOut
             }
             x = xs! / Float(numKernels)
@@ -138,11 +153,23 @@ class Generator: Module {
         x = leakyRelu(x, negativeSlope: 0.01)
 
         x = x.transposed(axes: [0, 2, 1])
-        x = convPost(x: x, conv: conv1d).transposed(axes: [0, 2, 1])
+        x = convPost(x: x, conv: conv1d)
+        x = x.transposed(axes: [0, 2, 1])
+
+        let magSliceAfterConvPost = x[0..., 0..<postNFFT/2+1, 0...]
+        print("magSliceAfterConvPost stats:", magSliceAfterConvPost.min().item(Float.self),
+              magSliceAfterConvPost.max().item(Float.self),
+              magSliceAfterConvPost.mean().item(Float.self))
+
 
         // Final waveform synthesis
         let spec = MLX.exp(x[0..., 0..<postNFFT / 2 + 1, 0...])
         let phase = MLX.sin(x[0..., (postNFFT / 2 + 1)..., 0...])
-        return stft.inverse(magnitude: spec, phase: phase)
+        let waveform = stft.inverse(magnitude: spec, phase: phase)
+
+        print("spec stats:", spec.min().item(Float.self), spec.max().item(Float.self), spec.mean().item(Float.self))
+        print("phase stats:", phase.min().item(Float.self), phase.max().item(Float.self))
+        print("waveform shape: \(waveform.shape), min: \(waveform.min().item(Float.self)), max: \(waveform.max().item(Float.self)), mean: \(waveform.mean().item(Float.self))")
+        return waveform
     }
 }

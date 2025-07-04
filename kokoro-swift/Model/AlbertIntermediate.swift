@@ -32,7 +32,7 @@ class AlbertIntermediate: Module {
 
     init(config: AlbertModelArgs) {
         super.init()
-        self.dense = Linear(config.hiddenSize, config.intermediateSize)
+        self.dense = Linear(config.hiddenSize, config.intermediateSize, zeroInitialized: true)
         self.intermediateActFn = GELU()
     }
 

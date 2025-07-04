@@ -67,22 +67,22 @@ class AlbertSelfAttention: Module {
     @ModuleInfo var key: Linear
     @ModuleInfo var value: Linear
     @ModuleInfo var dense: Linear
-    @ModuleInfo var layerNorm: LayerNorm
-    @ModuleInfo var dropout: Dropout
+    @ModuleInfo(key: "LayerNorm") var layerNorm: LayerNorm
+//    var dropout: Dropout
 
     init(config: AlbertModelArgs) {
         self.numAttentionHeads = config.numAttentionHeads
         self.attentionHeadSize = config.hiddenSize / config.numAttentionHeads
         self.allHeadSize = self.numAttentionHeads * self.attentionHeadSize
 
-        super.init()
-        self.query = Linear(config.hiddenSize, allHeadSize)
-        self.key = Linear(config.hiddenSize, allHeadSize)
-        self.value = Linear(config.hiddenSize, allHeadSize)
-        self.dense = Linear(config.hiddenSize, config.hiddenSize)
+        self._query.wrappedValue = Linear(config.hiddenSize, allHeadSize, zeroInitialized: true)
+        self._key.wrappedValue = Linear(config.hiddenSize, allHeadSize, zeroInitialized: true)
+        self._value.wrappedValue = Linear(config.hiddenSize, allHeadSize, zeroInitialized: true)
+        self._dense.wrappedValue = Linear(config.hiddenSize, config.hiddenSize, zeroInitialized: true)
 
-        self.layerNorm = LayerNorm(dimensions: config.hiddenSize, eps: config.layerNormEps)
-        self.dropout = Dropout(p: config.attentionProbsDropoutProb)
+        self._layerNorm.wrappedValue = LayerNorm(dimensions: config.hiddenSize, eps: config.layerNormEps)
+//        self.dropout = Dropout(p: config.attentionProbsDropoutProb)
+        super.init()
     }
 
     func transposeForScores(_ x: MLXArray) -> MLXArray {
@@ -106,8 +106,8 @@ class AlbertSelfAttention: Module {
             attentionScores += attentionMask
         }
 
-        var attentionProbs = MLX.softmax(attentionScores, axis: -1)
-        attentionProbs = dropout(attentionProbs)
+        let attentionProbs = MLX.softmax(attentionScores, axis: -1)
+//        attentionProbs = dropout(attentionProbs)
 
         var contextLayer = MLX.matmul(attentionProbs, valueLayer)
         contextLayer = contextLayer.transposed(axes: [0, 2, 1, 3])
