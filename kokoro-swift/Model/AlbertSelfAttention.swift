@@ -26,7 +26,7 @@ import MLXNN
 ///   - `value`: A `Linear` layer that projects input embeddings into the value space.
 ///   - `dense`: A `Linear` layer that combines outputs from all attention heads.
 ///   - `layerNorm`: A `LayerNorm` module that normalizes the final output to stabilize training.
-///   - `dropout`: A `Dropout` layer that applies regularization to prevent overfitting.
+///   - A `Dropout` layer has been removed.
 ///
 /// - Initialization:
 ///   - `init(config: AlbertModelArgs)`
@@ -68,7 +68,6 @@ class AlbertSelfAttention: Module {
     @ModuleInfo var value: Linear
     @ModuleInfo var dense: Linear
     @ModuleInfo(key: "LayerNorm") var layerNorm: LayerNorm
-//    var dropout: Dropout
 
     init(config: AlbertModelArgs) {
         self.numAttentionHeads = config.numAttentionHeads
@@ -81,7 +80,6 @@ class AlbertSelfAttention: Module {
         self._dense.wrappedValue = Linear(config.hiddenSize, config.hiddenSize, zeroInitialized: true)
 
         self._layerNorm.wrappedValue = LayerNorm(dimensions: config.hiddenSize, eps: config.layerNormEps)
-//        self.dropout = Dropout(p: config.attentionProbsDropoutProb)
         super.init()
     }
 
@@ -107,7 +105,6 @@ class AlbertSelfAttention: Module {
         }
 
         let attentionProbs = MLX.softmax(attentionScores, axis: -1)
-//        attentionProbs = dropout(attentionProbs)
 
         var contextLayer = MLX.matmul(attentionProbs, valueLayer)
         contextLayer = contextLayer.transposed(axes: [0, 2, 1, 3])

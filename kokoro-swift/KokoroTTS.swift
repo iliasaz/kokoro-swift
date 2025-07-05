@@ -144,7 +144,7 @@ final class KokoroTTS {
             print("saving wav file")
             try buffer.saveToWavFile(at: waveFileUrl)
             print("file saved: \(waveFileUrl.path())")
-            return
+//            return
         } catch {
             print("could not save the wav file: \(error.localizedDescription)")
             return

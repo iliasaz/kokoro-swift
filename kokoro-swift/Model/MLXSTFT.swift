@@ -101,6 +101,28 @@ class MLXSTFT {
         return rfft(frames * w).transposed(axes: [1, 0])
     }
 
+    func getWindow(window: Any, winLen: Int, nFft: Int) -> MLXArray {
+        var w: MLXArray
+        if let windowStr = window as? String {
+            if windowStr.lowercased() == "hann" {
+                w = npHanning(winLen + 1)[0 ..< winLen]
+            } else {
+                fatalError("Only hanning is supported for window, not \(windowStr)")
+            }
+        } else if let windowArray = window as? MLXArray {
+            w = windowArray
+        } else {
+            fatalError("Window must be a string or MLXArray")
+        }
+
+        if w.shape[0] < nFft {
+            let padSize = nFft - w.shape[0]
+            w = MLX.concatenated([w, MLXArray.zeros([padSize])], axis: 0)
+        }
+        return w
+    }
+
+
     /// Computes the inverse Short-Time Fourier Transform (iSTFT) to reconstruct a waveform.
     ///
     /// - Parameters:
@@ -111,52 +133,57 @@ class MLXSTFT {
     ///   - center: If `true`, pads signal before inverse STFT.
     ///   - length: Desired length of the output signal.
     /// - Returns: Reconstructed waveform `(samples)`.
+
     func mlxISTFT(
         x: MLXArray,
         hopLength: Int? = nil,
         winLength: Int? = nil,
-        window: String = "hann",
-        center: Bool = true,
-        length: Int? = nil
+        window: Any = "hann"
     ) -> MLXArray {
-        let hop = hopLength ?? (winLength! / 4)
-        let win = winLength ?? ((x.shape[1] - 1) * 2)
 
-        var w: MLXArray
-        if window.lowercased() == "hann" {
-            w = npHanning(win) // Hann window function
-        } else {
-            fatalError("Only 'hann' window is supported.")
+        let winLen = winLength ?? ((x.shape[1] - 1) * 2)
+        let hopLen = hopLength ?? (winLen / 4)
+
+        let w = getWindow(window: window, winLen: winLen, nFft: winLen)
+
+        let xTransposed = x.transposed(1, 0)
+        let t = (xTransposed.shape[0] - 1) * hopLen + winLen
+        let windowModLen = 20 / 5
+
+        let wSquared = w * w
+        let totalWsquared = MLX.concatenated(Array(repeating: wSquared, count: t / winLen))
+        let output = MLXFFT.irfft(xTransposed, axis: 1) * w
+
+        var outputs: [MLXArray] = []
+        var windowSums: [MLXArray] = []
+
+        for i in 0 ..< windowModLen {
+            let outputStride = output[.stride(from: i, by: windowModLen), .ellipsis].reshaped([-1])
+            let windowSumArray = totalWsquared[0 ..< outputStride.shape[0]]
+
+            outputs.append(MLX.concatenated([
+                MLXArray.zeros([i * hopLen]),
+                outputStride,
+                MLXArray.zeros([max(0, t - i * hopLen - outputStride.shape[0])]),
+            ]))
+
+            windowSums.append(MLX.concatenated([
+                MLXArray.zeros([i * hopLen]),
+                windowSumArray,
+                MLXArray.zeros([max(0, t - i * hopLen - windowSumArray.shape[0])]),
+            ]))
         }
 
-        if w.shape[0] < win {
-            let padSize = win - w.shape[0]
-            w = concatenated([w, MLX.zeros([padSize])], axis: 0)
+        var reconstructed = outputs[0]
+        var windowSum = windowSums[0]
+        for i in 1 ..< windowModLen {
+            reconstructed += outputs[i]
+            windowSum += windowSums[i]
         }
 
-        let xT = x.transposed(axes: [1, 0])
-        let totalSamples = (xT.shape[0] - 1) * hop + win
-        var reconstructed = MLX.zeros([totalSamples])
-        var windowSum = MLX.zeros([totalSamples])
-
-        for i in 0..<xT.shape[0] {
-            let frameTime = irfft(xT[i])
-            let start = i * hop
-            let end = start + win
-
-            reconstructed[start..<end] += frameTime * w
-            windowSum[start..<end] += w * w
-        }
-
-        reconstructed = MLX.where(windowSum .!= 0, reconstructed / windowSum, reconstructed)
-
-        if center && length == nil {
-            reconstructed = reconstructed[(win / 2)..<(reconstructed.shape[0] - win / 2)]
-        }
-
-        if let length = length {
-            reconstructed = reconstructed[0..<length]
-        }
+        reconstructed =
+            reconstructed[winLen / 2 ..< (reconstructed.shape[0] - winLen / 2)] /
+            windowSum[winLen / 2 ..< (reconstructed.shape[0] - winLen / 2)]
 
         return reconstructed
     }
@@ -220,7 +247,6 @@ class MLXSTFT {
 
             // Compute magnitude and phase
             let magnitude = MLX.abs(stftResult)
-//            let phase = MLX.atan(stftResult)
             let phase = MLX.atan2(stftResult.imaginaryPart(), stftResult.realPart())
 
             magnitudes.append(magnitude)
@@ -298,7 +324,7 @@ class MLXSTFT {
         // Compute the phase correction as the difference between the modded difference and the original.
         var phCorrect = ddmod - dd
         phCorrect = which( (abs(dd) .< effectiveDiscont), 0.0, phCorrect )
-        var up = MLXArray.init(data: phase.asData())
+        let up = MLXArray.init(data: phase.asData())
         up[1..., axis: axis] = phase[1..., axis: axis] + phCorrect.cumsum(axis: axis)
         return up
     }

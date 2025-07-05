@@ -91,141 +91,85 @@ class ConvWeighted: Module {
         super.init()
     }
 
-//    func callAsFunction(x: MLXArray, conv: (MLXArray, MLXArray, Int, Int, Int, Int, StreamOrDevice) -> MLXArray) -> MLXArray {
-//        let weight = Self.weightNorm(weightV: weightV, weightG: weightG, dim: 0)
-//        let isTransposed = (conv == convTransposed1d_wrapped)
-//
-//        var biasReshaped: MLXArray? = nil
-//        if let bias = bias {
-//            biasReshaped = bias.reshaped([1, 1, bias.count])
-//        }
-//
-//        func applyConv(_ x: MLXArray, _ weightToUse: MLXArray) -> MLXArray {
-//            var result = conv(x, weightToUse, stride, padding, dilation, groups, .default)
-//            if let biasReshaped = biasReshaped {
-//                result += biasReshaped
-//            }
-//            return result
-//        }
-//
-//        if x.shape.last == weight.shape.last || groups > 1 {
-//            return applyConv(x, weight)
-//        } else {
-//            return applyConv(x, weight.transposed(axes: [2, 1, 0]))
-//        }
-//    }
-//
-//    /// Applies weight normalization to the input tensor.
-//    /// Reparameterizes weights as w = g * (v / ||v||)
-//    static func weightNorm(weightV: MLXArray, weightG: MLXArray, dim: Int? = nil) -> MLXArray {
-//        let rank = weightV.ndim
-//        var axes: [Int]
-//
-//        if let dim = dim {
-//            let adjustedDim = dim < -1 ? dim + rank : dim
-//            axes = Array(0..<rank).filter { $0 != adjustedDim }
-//        } else {
-//            axes = Array(0..<rank)
-//        }
-//
-//        let normV = computeNorm(x: weightV, p: 2, dim: axes, keepDim: true)
-//        return (weightV / (normV + 1e-7)) * weightG
-//    }
-//
-//    /// Computes the p-norm of a tensor along specified dimensions.
-//    static func computeNorm(x: MLXArray, p: Int, dim: [Int]? = nil, keepDim: Bool = false) -> MLXArray {
-//        guard p == 1 || p == 2 else {
-//            fatalError("Only p-norms with p of 1 or 2 are supported")
-//        }
-//
-//        let dims = dim ?? Array(0..<x.ndim)
-//
-//        if p == 1 {
-//            return x.abs().sum(axes: dims, keepDims: keepDim)
-//        } else {
-//            return (x * x).sum(axes: dims, keepDims: keepDim).sqrt()
-//        }
-//    }
-
     public func callAsFunction(x: MLXArray, conv: (MLXArray, MLXArray, Int, Int, Int, Int, StreamOrDevice) -> MLXArray) -> MLXArray {
-      let weight = weightNorm(weightV: weightV, weightG: weightG, dim: 0)
-
-      func applyConv(x: MLXArray, weightToUse: MLXArray) -> MLXArray {
-        let result = conv(
-          x,
-          weightToUse,
-          self.stride,
-          padding,
-          dilation,
-          groups,
-          .default
-        )
-
-        if let bias = bias {
-            return result + bias.reshaped([1, 1, -1])
+        let weight = weightNorm(weightV: weightV, weightG: weightG, dim: 0)
+        
+        func applyConv(x: MLXArray, weightToUse: MLXArray) -> MLXArray {
+            let result = conv(
+                x,
+                weightToUse,
+                self.stride,
+                padding,
+                dilation,
+                groups,
+                .default
+            )
+            
+            if let bias = bias {
+                return result + bias.reshaped([1, 1, -1])
+            }
+            return result
         }
-        return result
-      }
-
-      if x.shape.last == weight.shape.last || groups > 1 {
-        return applyConv(x: x, weightToUse: weight)
-      } else {
-        return applyConv(x: x, weightToUse: weight.transposed())
-      }
+        
+        if x.shape.last == weight.shape.last || groups > 1 {
+            return applyConv(x: x, weightToUse: weight)
+        } else {
+            return applyConv(x: x, weightToUse: weight.transposed())
+        }
     }
 }
 
 
 func computeNorm(
-  x: MLXArray,
-  p: Int,
-  dim: [Int]? = nil,
-  keepdim: Bool = false
+    x: MLXArray,
+    p: Int,
+    dim: [Int]? = nil,
+    keepdim: Bool = false
 ) -> MLXArray {
-  guard p == 1 || p == 2 else {
-    fatalError("Only p-norms with p of 1 or 2 are supported")
-  }
+    guard p == 1 || p == 2 else {
+        fatalError("Only p-norms with p of 1 or 2 are supported")
+    }
 
-  let dimensions: [Int]
-  if let dim = dim {
-    dimensions = dim
-  } else {
-    dimensions = Array(0 ..< x.ndim)
-  }
+    let dimensions: [Int]
+    if let dim = dim {
+        dimensions = dim
+    } else {
+        dimensions = Array(0 ..< x.ndim)
+    }
 
-  if p == 1 {
-    // L1 norm
-    return MLX.sum(MLX.abs(x), axes: dimensions, keepDims: keepdim)
-  } else {
-    // L2 norm
-    return MLX.sqrt(MLX.sum(x * x, axes: dimensions, keepDims: keepdim))
-  }
+    if p == 1 {
+        // L1 norm
+        return MLX.sum(MLX.abs(x), axes: dimensions, keepDims: keepdim)
+    } else {
+        // L2 norm
+        return MLX.sqrt(MLX.sum(x * x, axes: dimensions, keepDims: keepdim))
+    }
 }
 
 func weightNorm(
-  weightV: MLXArray,
-  weightG: MLXArray,
-  dim: Int? = nil
+    weightV: MLXArray,
+    weightG: MLXArray,
+    dim: Int? = nil
 ) -> MLXArray {
-  let rank = weightV.shape.count
+    let rank = weightV.shape.count
 
-  var axes: [Int]
+    var axes: [Int]
 
-  if let dim = dim {
-    var adjustedDim = dim
-    if dim < 0 {
-      adjustedDim += rank
+    if let dim = dim {
+        var adjustedDim = dim
+        if dim < 0 {
+            adjustedDim += rank
+        }
+
+        axes = Array(0 ..< rank)
+        if adjustedDim != -1 {
+            axes.removeAll(where: { $0 == adjustedDim })
+        }
+    } else {
+        axes = Array(0 ..< rank)
     }
 
-    axes = Array(0 ..< rank)
-    if adjustedDim != -1 {
-      axes.removeAll(where: { $0 == adjustedDim })
-    }
-  } else {
-    axes = Array(0 ..< rank)
-  }
-
-  let normV = computeNorm(x: weightV, p: 2, dim: axes, keepdim: true)
-  let normalizedWeight = weightV / (normV + 1e-7) // Add epsilon for numerical stability
-  return normalizedWeight * weightG
+    let normV = computeNorm(x: weightV, p: 2, dim: axes, keepdim: true)
+    let normalizedWeight = weightV / (normV + 1e-7) // Add epsilon for numerical stability
+    return normalizedWeight * weightG
 }

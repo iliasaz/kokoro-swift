@@ -42,8 +42,6 @@ class ProsodyPredictor: Module {
     @ModuleInfo(key: "F0_proj") var f0Proj: Conv1d
     @ModuleInfo(key: "N_proj") var nProj: Conv1d
 
-//    var dropout: Dropout
-
     init(styleDim: Int, dHid: Int, nLayers: Int, maxDur: Int = 50, dropout: Float = 0.1) {
         self._textEncoder.wrappedValue = DurationEncoder(styDim: styleDim, dModel: dHid, nLayers: nLayers, dropout: dropout)
         self._lstm.wrappedValue = BidirectionalLSTM(inputSize: dHid + styleDim, hiddenSize: dHid / 2)
@@ -64,15 +62,12 @@ class ProsodyPredictor: Module {
 
         self._f0Proj.wrappedValue = Conv1d(inputChannels: dHid / 2, outputChannels: 1, kernelSize: 1, padding: 0)
         self._nProj.wrappedValue = Conv1d(inputChannels: dHid / 2, outputChannels: 1, kernelSize: 1, padding: 0)
-
-//        self.dropout = Dropout(p: 0.5)
         super.init()
     }
 
     func callAsFunction(texts: MLXArray, style: MLXArray, textLengths: MLXArray, alignment: MLXArray, m: MLXArray) -> (MLXArray, MLXArray) {
         var d = textEncoder(x: texts, style: style, textLengths: textLengths, mask: m)
         d = lstm(d).0
-//        d = dropout(d)
         let duration = durationProj(d).squeezed(axis: -1)
         let en = MLX.matmul(d.transposed(axes: [0, 2, 1]), alignment)
         return (duration, en)

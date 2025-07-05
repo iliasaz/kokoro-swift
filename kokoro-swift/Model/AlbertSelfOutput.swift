@@ -15,7 +15,7 @@ import MLXNN
 /// - Properties:
 ///   - `dense`: A `Linear` layer that projects the attention output back to the hidden size.
 ///   - `layerNorm`: A `LayerNorm` module that normalizes the output with a residual connection.
-///   - `dropout`: A `Dropout` layer that applies regularization to reduce overfitting.
+///   - A `Dropout` layer has been removed.
 ///
 /// - Methods:
 ///   - `call(hiddenStates: MLXArray, inputTensor: MLXArray) -> MLXArray`
@@ -32,18 +32,15 @@ import MLXNN
 class AlbertSelfOutput: Module {
     @ModuleInfo var dense: Linear
     @ModuleInfo var layerNorm: LayerNorm
-//    @ModuleInfo var dropout: Dropout
 
     init(config: AlbertModelArgs) {
         super.init()
         self.dense = Linear(config.hiddenSize, config.hiddenSize, zeroInitialized: true)
         self.layerNorm = LayerNorm(dimensions: config.hiddenSize, eps: config.layerNormEps)
-//        self.dropout = Dropout(p: config.hiddenDropoutProb)
     }
 
     func callAsFunction(hiddenStates: MLXArray, inputTensor: MLXArray) -> MLXArray {
         var output = dense(hiddenStates)
-//        output = dropout(output)
         output = layerNorm(output + inputTensor)
         return output
     }

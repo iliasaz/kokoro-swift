@@ -26,7 +26,7 @@ import MLXNN
 ///   - `positionEmbeddings`: An `Embedding` layer that encodes positional information for each token.
 ///   - `tokenTypeEmbeddings`: An `Embedding` layer that differentiates between segment types (e.g., sentence A vs. B).
 ///   - `layerNorm`: A `LayerNorm` module that normalizes embeddings to stabilize training.
-///   - `dropout`: A `Dropout` layer that applies regularization to prevent overfitting.
+///   - `A dropout layer has been removed.
 ///
 /// - Initialization:
 ///   - `init(config: AlbertModelArgs)`
@@ -46,7 +46,6 @@ class AlbertEmbeddings: Module {
     @ModuleInfo(key: "position_embeddings") var positionEmbeddings: Embedding
     @ModuleInfo(key: "token_type_embeddings") var tokenTypeEmbeddings: Embedding
     @ModuleInfo(key: "LayerNorm") var layerNorm: LayerNorm
-//    var dropout: Dropout
 
     init(config: AlbertModelArgs) {
 
@@ -54,7 +53,6 @@ class AlbertEmbeddings: Module {
         self._positionEmbeddings.wrappedValue = Embedding(embeddingCount: config.maxPositionEmbeddings, dimensions: config.embeddingSize)
         self._tokenTypeEmbeddings.wrappedValue = Embedding(embeddingCount: config.typeVocabSize, dimensions: config.embeddingSize)
         self._layerNorm.wrappedValue = LayerNorm(dimensions: config.embeddingSize, eps: config.layerNormEps)
-//        self.dropout = Dropout(p: config.hiddenDropoutProb)
         super.init()
     }
 
@@ -69,7 +67,6 @@ class AlbertEmbeddings: Module {
 
         var embeddings = wordsEmbeddings + positionEmbeddings + tokenTypeEmbeddings
         embeddings = layerNorm(embeddings)
-//        embeddings = dropout(embeddings)
 
         return embeddings
     }

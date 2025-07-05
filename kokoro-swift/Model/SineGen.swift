@@ -84,8 +84,6 @@ class SineGen: Module {
 
             var phase = MLX.cumsum(radValues, axis: 1) * 2 * Float.pi
 
-            //            phase = self.phaseInterpolate(phase.transposed(axes: [0, 2, 1])).transposed(axes: [0, 2, 1])
-
             phase = interpolate(
               input: phase.transposed(0, 2, 1) * Float(upsampleScale),
               scaleFactor: [Float(upsampleScale)],
@@ -137,3 +135,4 @@ class SineGen: Module {
         return (outputWaves, uv, noise)
     }
 }
+
