@@ -112,29 +112,32 @@ class NLPEngine {
  Espeak/spaCy functionality has been replaced with NLTagger stubs.
  */
 class G2P {
-    var british: Bool
-    var nlp: NLPEngine
-    var lexicon: Lexicon
+    let british: Bool
+    let nlp: NLPEngine
+    let lexicon: Lexicon
     // Fallback functionality is stubbed out.
     var fallback: ((MToken) -> (String?, Int?))? = nil
-    var unk: String
-
+    let unk: String
+    let useEspeak: Bool
+    let espeak: EspeakFallback
     /**
      Initializes the G2P engine.
 
      - Parameters:
-       - trf: Transformer flag (unused in this stub).
        - british: Whether to use British English phoneme mappings.
-       - fallback: Optional fallback function (not implemented in this stub).
        - unk: The unknown phoneme symbol.
+       - useEspeak: true if espeak-ng should be used instead of misaki G2P backend
      */
-    init(trf: Bool = false, british: Bool = false, fallback: ((MToken) -> (String?, Int?))? = nil, unk: String = "❓") {
+//    init(trf: Bool = false, british: Bool = false, fallback: ((MToken) -> (String?, Int?))? = nil, unk: String = "❓") {
+    init(british: Bool = false, unk: String = "❓", useEspeak: Bool = true) throws {
         self.british = british
         // Initialize NLTagger-based engine.
         self.nlp = NLPEngine()
         self.lexicon = Lexicon(british: british)
         self.fallback = nil
         self.unk = unk
+        self.useEspeak = useEspeak
+        try espeak = EspeakFallback(british: british)
     }
 
     /**
@@ -439,14 +442,20 @@ class G2P {
         }
         var ctx = TokenContext()
         for i in stride(from: flatTokens.count - 1, through: 0, by: -1) {
-            if flatTokens[i].phonemes == nil {
-                let (ps, rating) = self.lexicon(token: flatTokens[i], ctx: ctx)
+            if self.useEspeak {
+                let (ps, rating) = espeak.phonemize(token: flatTokens[i])
                 flatTokens[i].phonemes = ps
                 flatTokens[i].rating = rating
-                if flatTokens[i].phonemes == nil, let fallback = self.fallback {
-                    let (ps, rating) = fallback(flatTokens[i])
+            } else {
+                if flatTokens[i].phonemes == nil {
+                    let (ps, rating) = self.lexicon(token: flatTokens[i], ctx: ctx)
                     flatTokens[i].phonemes = ps
                     flatTokens[i].rating = rating
+                    if flatTokens[i].phonemes == nil, let fallback = self.fallback {
+                        let (ps, rating) = fallback(flatTokens[i])
+                        flatTokens[i].phonemes = ps
+                        flatTokens[i].rating = rating
+                    }
                 }
             }
             ctx = G2P.tokenContext(ctx: ctx, ps: flatTokens[i].phonemes, token: flatTokens[i])

@@ -9,6 +9,7 @@ import Foundation
 import MLX
 import MLXNN
 import AVFoundation
+import libespeak_ng
 
 final class KokoroTTS {
     private let kokoro: Kokoro
@@ -39,9 +40,80 @@ final class KokoroTTS {
     }
 
     deinit {
-         NotificationCenter.default.removeObserver(self)
-         cleanupAudioSystem()
+        cleanupAudioSystem()
+        let terminateOK = espeak_Terminate()
+        print("ESpeakNGEngine termination OK: \(terminateOK == EE_OK)")
+        NotificationCenter.default.removeObserver(self)
      }
+
+    public func initEspeak() {
+        do {
+            let documentsDirectory = try! FileManager.default.url(for: .documentDirectory, in: .userDomainMask, appropriateFor: nil, create: true)
+            let initOK = espeak_Initialize(AUDIO_OUTPUT_PLAYBACK, 0, documentsDirectory.path, 0)
+            print("initOK: \(initOK)")
+            let voiceName = ("gmw/en-GB-scotland" as NSString).utf8String
+            try espeak_ng_SetVoiceByName(voiceName).check()
+//            try espeak_ng_SetVoiceByName(ESPEAKNG_DEFAULT_VOICE).check()
+            print("voice set")
+            //        try espeak_ng_Initialize(nil).check()
+            try espeak_ng_SetPhonemeEvents(1, 0).check()
+            print("phoneme events set")
+        } catch {
+            print("error: \(error.localizedDescription)")
+        }
+    }
+
+    public func getPhonemes(for text: String, language: LanguageDialect) -> String {
+        let textCopy = text as NSString
+        var textPtr = UnsafeRawPointer(textCopy.utf8String)
+        let phonemes_mode = Int32((Int32(Character("_").asciiValue!) << 8) | 0x02)
+        let result = autoreleasepool { () -> [String] in
+            withUnsafeMutablePointer(to: &textPtr) { ptr in
+                var resultWords: [String] = []
+                while ptr.pointee != nil {
+                    if let result = espeak_TextToPhonemes(ptr, espeakCHARS_UTF8, phonemes_mode) {
+                        // Create a copy of the returned string to ensure we own the memory
+                        resultWords.append(String(cString: result, encoding: .utf8)!)
+                    }
+                }
+                return resultWords
+            }
+        }
+        if !result.isEmpty {
+            return postProcessPhonemes(result.joined(separator: " "), language: language)
+        } else {
+            print("No phonemes found for text: \(text)")
+            return ""
+        }
+    }
+
+    // Post processes manually phonemes before returning them
+    // NOTE: This is currently only for English, handling other langauges requires different kind of postproccessing
+    private func postProcessPhonemes(_ phonemes: String, language: LanguageDialect) -> String {
+        var result = phonemes.trimmingCharacters(in: .whitespacesAndNewlines)
+        for (old, new) in EspeakFallback.E2M {
+            result = result.replacingOccurrences(of: old, with: new)
+        }
+
+        result = result.replacingOccurrences(of: "(\\S)\u{0329}", with: "ᵊ$1", options: .regularExpression)
+        result = result.replacingOccurrences(of: "\u{0329}", with: "")
+
+        if language == .enGB {
+            result = result.replacingOccurrences(of: "e^ə", with: "ɛː")
+            result = result.replacingOccurrences(of: "iə", with: "ɪə")
+            result = result.replacingOccurrences(of: "ə^ʊ", with: "Q")
+        } else {
+            result = result.replacingOccurrences(of: "o^ʊ", with: "O")
+            result = result.replacingOccurrences(of: "ɜːɹ", with: "ɜɹ")
+            result = result.replacingOccurrences(of: "ɜː", with: "ɜɹ")
+            result = result.replacingOccurrences(of: "ɪə", with: "iə")
+            result = result.replacingOccurrences(of: "ː", with: "")
+        }
+
+        // For espeak < 1.52
+        result = result.replacingOccurrences(of: "o", with: "ɔ")
+        return result.replacingOccurrences(of: "^", with: "")
+    }
 
 
     // MARK: - Voice Loading and Converting
@@ -59,6 +131,7 @@ final class KokoroTTS {
     // loads one or more available voices and initializes the corresponding G2Ps
     func loadVoices(_ voices: [KokoroVoice]) {
         self.voices.removeAll()
+        // TODO: does this release espeak memory?
         self.g2ps.removeAll()
         var dialects: Set<LanguageDialect> = []
         for voice in voices {
@@ -69,9 +142,15 @@ final class KokoroTTS {
                 print("Error: could not load voice \(voice.rawValue.name)")
             }
         }
+
+        // TODO: can we really have multiple espeak engines with different dialects at the same time? Probably not. This needs fixing.
         for dialect in dialects {
 //            self.g2ps[dialect] = G2P(british: dialect == .enGB, fallback: try? EspeakFallback(british: dialect == .enGB).phonemize)
-            self.g2ps[dialect] = G2P(british: dialect == .enGB, fallback: nil)
+            do {
+                try self.g2ps[dialect] = G2P(british: dialect == .enGB, useEspeak: true)
+            } catch {
+                print("error initializing G2P: \(error.localizedDescription)")
+            }
         }
     }
 
@@ -97,6 +176,8 @@ final class KokoroTTS {
         resetAudioSystem()
 
         do {
+            let voiceNamePtr = (voice.rawValue.language.espeakVoiceName as NSString).utf8String
+            try espeak_ng_SetVoiceByName(voiceNamePtr).check()
             let audioData = try generate(text: text, voice: voice, speed: speed)
             playAudioChunk(audioData)
         } catch {
@@ -113,7 +194,8 @@ final class KokoroTTS {
             throw NSError(domain: "KokoroTTS", code: 1002, userInfo: [NSLocalizedDescriptionKey: "G2P model not loaded for \(voice.rawValue.language)"])
         }
         let g2p = g2ps[voice.rawValue.language]!
-        let (phonemes, _) = g2p(text: text)
+//        let (phonemes, _) = g2p(text: text, preprocess: false)
+        let phonemes = getPhonemes(for: text, language: voice.rawValue.language)
         let inputIDs = encode(phonemes: phonemes)
         print("phonemes: \(phonemes), inputIDs shape: \(inputIDs.shape)")
         let output = kokoro(inputIDs: inputIDs, voice: self.voices[voice]!, speed: speed)
@@ -306,8 +388,9 @@ final class KokoroTTS {
     private func encode(phonemes: String) -> MLXArray {
         let inputIds = phonemes.compactMap { self.vocab[String($0)] }
 //        print("inputIds: \(inputIds)")
-let fixedInputIds = [65, 156, 138, 56, 61, 16, 83, 58, 157, 69, 56, 16, 83, 16, 62, 156, 43, 102, 55, 16, 102, 56, 16, 83, 16, 64, 156, 72, 54, 51, 16, 123, 156, 72, 58, 62, 16, 102, 56, 16, 55, 156, 102, 61, 62, 16, 72, 56, 46, 16, 55, 156, 102, 61, 62, 83, 123, 123, 51, 16, 81, 86, 123, 65, 157, 138, 68, 16, 83, 16, 54, 156, 102, 125, 83, 54, 16, 64, 156, 102, 54, 102, 46, 147, 16, 65, 157, 86, 123, 16, 81, 83, 16, 61, 62, 156, 69, 123, 68, 16, 65, 156, 102, 61, 58, 83, 123, 46, 16, 61, 156, 51, 53, 123, 177, 62, 61, 16, 62, 83, 16, 81, 76, 135, 68, 16, 50, 157, 63, 16, 46, 156, 86, 123, 46, 16, 62, 83, 16, 54, 156, 102, 61, 83, 56]
-        let paddedInputIdsBase = [0] + fixedInputIds + [0] // Add BOS/EOS tokens
+//let fixedInputIds = [65, 156, 138, 56, 61, 16, 83, 58, 157, 69, 56, 16, 83, 16, 62, 156, 43, 102, 55, 16, 102, 56, 16, 83, 16, 64, 156, 72, 54, 51, 16, 123, 156, 72, 58, 62, 16, 102, 56, 16, 55, 156, 102, 61, 62, 16, 72, 56, 46, 16, 55, 156, 102, 61, 62, 83, 123, 123, 51, 16, 81, 86, 123, 65, 157, 138, 68, 16, 83, 16, 54, 156, 102, 125, 83, 54, 16, 64, 156, 102, 54, 102, 46, 147, 16, 65, 157, 86, 123, 16, 81, 83, 16, 61, 62, 156, 69, 123, 68, 16, 65, 156, 102, 61, 58, 83, 123, 46, 16, 61, 156, 51, 53, 123, 177, 62, 61, 16, 62, 83, 16, 81, 76, 135, 68, 16, 50, 157, 63, 16, 46, 156, 86, 123, 46, 16, 62, 83, 16, 54, 156, 102, 61, 83, 56]
+//        let paddedInputIdsBase = [0] + fixedInputIds + [0] // Add BOS/EOS tokens
+        let paddedInputIdsBase = [0] + inputIds + [0] // Add BOS/EOS tokens
         return MLXArray(paddedInputIdsBase).expandedDimensions(axes: [0])
     }
 
@@ -512,6 +595,14 @@ public enum LanguageDialect: String, CaseIterable {
     case none = ""
     case enUS = "en-us"
     case enGB = "en-gb"
+
+    var espeakVoiceName: String {
+        switch self {
+            case .enUS: return "gmw/en-US"
+            case .enGB: return "gmw/en"
+            default: return "gmw/en-US"
+        }
+    }
 }
 
 public enum Gender {

@@ -112,8 +112,9 @@ class Generator: Module {
         f0 = f0Upsample(f0)
 
         // Step 2: Generate harmonic and noise sources
-        var (harSource, _, _) = sourceModule(f0)
-        harSource = harSource.transposed(axes: [0, 2, 1]).squeezed(axis: 1)
+        let harSource = sourceModule(f0)
+            .transposed(axes: [0, 2, 1])
+            .squeezed(axis: 1)
         let (harSpec, harPhase) = stft.transform(harSource)
 
         let har = MLX.concatenated([harSpec, harPhase], axis: 1).transposed(axes: [0, 2, 1])

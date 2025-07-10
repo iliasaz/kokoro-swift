@@ -7,32 +7,6 @@
 
 import Foundation
 
-
-
-/// A stub for setting the espeak-ng library and data paths.
-class EspeakWrapper {
-    static func setLibrary(path: String) {
-        // Set the library path for espeak-ng.
-    }
-
-    static func setDataPath(path: String) {
-        // Set the data path for espeak-ng.
-    }
-}
-
-/// A stub loader for espeak-ng paths.
-class EspeakngLoader {
-    static func getLibraryPath() -> String {
-        // Return the library path for espeak-ng.
-        return "/path/to/espeak-ng/library"
-    }
-
-    static func getDataPath() -> String {
-        // Return the data path for espeak-ng.
-        return "/path/to/espeak-ng/data"
-    }
-}
-
 // MARK: - EspeakFallback for English
 
 /**
@@ -83,10 +57,6 @@ class EspeakFallback {
      */
     init(british: Bool) throws {
         self.british = british
-
-        // Set espeak-ng library and data paths.
-        EspeakWrapper.setLibrary(path: EspeakngLoader.getLibraryPath())
-        EspeakWrapper.setDataPath(path: EspeakngLoader.getDataPath())
 
         let language = british ? "en-gb" : "en-us"
         try self.backend = EspeakBackend(language: language, preservePunctuation: true, withStress: true, tie: "^")

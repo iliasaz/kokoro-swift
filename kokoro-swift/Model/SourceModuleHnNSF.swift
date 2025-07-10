@@ -69,16 +69,13 @@ class SourceModuleHnNSF: Module {
     ///   - `sineSource`: Harmonic excitation `(batch, length, 1)`.
     ///   - `noiseSource`: Noise excitation `(batch, length, 1)`.
     ///   - `uv`: Voiced/unvoiced decision `(batch, length, 1)`.
-    func callAsFunction(_ f0Sampled: MLXArray) -> (MLXArray, MLXArray, MLXArray) {
+    func callAsFunction(_ f0Sampled: MLXArray) -> MLXArray {
         // Step 1: Generate sine waveforms and voiced/unvoiced mask
         let (sineWaves, uv, _) = sineGen(f0: f0Sampled)
 
         // Step 2: Merge harmonics into a single excitation signal
         let sineMerge = MLX.tanh(linearLayer(sineWaves))
 
-        // Step 3: Generate noise with the same shape as UV
-        let noise = normal(uv.shape) * sineAmp / 3.0
-
-        return (sineMerge, noise, uv)
+        return sineMerge
     }
 }

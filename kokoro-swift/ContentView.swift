@@ -17,33 +17,36 @@ struct ContentView: View {
     var body: some View {
         VStack {
             TextField("story", text: $text)
-            Button("do") {
+            Button("getTokens") {
                 getTokens()
             }
             Text(result)
 
-            Button("convert All") {
-                convert()
-            }
+//            Button("convert All") {
+//                convert()
+//            }
 
             Button("load voices") {
                 loadSafeTensorVoices()
             }
 
             Button("speak") {
+                loadSafeTensorVoices()
                 kokoro.speak(text: text, voice: .afAlloy)
             }
         }
         .padding()
         .task {
-            kokoro.loadVoices([.afAlloy])
-            kokoro.speak(text: text, voice: .afAlloy)
+//            kokoro.loadVoices([.afAlloy])
+//            kokoro.speak(text: text, voice: .afAlloy, speed: 0.9)
         }
     }
 
     func getTokens() {
-//        pos()
-        result = ""
+//        kokoro.initEspeak()
+        let voice: KokoroVoice = .afAlloy
+        kokoro.loadVoices([voice])
+        result = kokoro.getPhonemes(for: text, language: voice.rawValue.language)
     }
 
     func convert() {

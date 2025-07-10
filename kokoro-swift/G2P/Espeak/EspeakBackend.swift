@@ -36,6 +36,11 @@ class EspeakBackend {
         try espeak_ng_SetVoiceByName(ESPEAKNG_DEFAULT_VOICE).check()
         try espeak_ng_SetPhonemeEvents(1, 0).check()
     }
+
+    deinit {
+        let terminateOK = espeak_Terminate()
+        print("ESpeakNGEngine termination OK: \(terminateOK == EE_OK)")
+     }
 }
 
 import Foundation
