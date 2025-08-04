@@ -1,0 +1,29 @@
+{
+  "configurations" : [
+    {
+      "id" : "5842DAA1-9E28-4F68-BC09-9C33923C120E",
+      "name" : "Test Scheme Action",
+      "options" : {
+
+      }
+    }
+  ],
+  "defaultOptions" : {
+    "targetForVariableExpansion" : {
+      "containerPath" : "container:kokoro-swift.xcodeproj",
+      "identifier" : "49B7A2212D7FB0E200B2BD45",
+      "name" : "kokoro-swift"
+    }
+  },
+  "testTargets" : [
+    {
+      "parallelizable" : true,
+      "target" : {
+        "containerPath" : "container:kokoro-swift.xcodeproj",
+        "identifier" : "49B7A2322D7FB0E300B2BD45",
+        "name" : "kokoro-swiftTests"
+      }
+    }
+  ],
+  "version" : 1
+}

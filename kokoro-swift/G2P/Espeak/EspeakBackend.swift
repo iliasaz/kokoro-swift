@@ -39,7 +39,7 @@ class EspeakBackend {
 
     deinit {
         let terminateOK = espeak_Terminate()
-        print("ESpeakNGEngine termination OK: \(terminateOK == EE_OK)")
+        logger.debug("ESpeakNGEngine termination OK: \(terminateOK == EE_OK)")
      }
 }
 

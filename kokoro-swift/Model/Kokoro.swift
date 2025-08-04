@@ -67,9 +67,8 @@ final class Kokoro: Module {
         inputIDs: MLXArray,
         voice: MLXArray,
         speed: Float = 1.0
-    ) -> Output {
+    ) -> MLXArray {
         precondition(inputIDs.ndim == 2, "Expected inputIDs to be of shape [1, seq_len]")
-        print("inputIDs shape: \(inputIDs.shape)")
         let batchSize = inputIDs.shape[0]
         let seqLen = inputIDs.shape[1]
 
@@ -78,65 +77,65 @@ final class Kokoro: Module {
         var textMask = MLXArray(0 ..< seqLen)[.newAxis, .ellipsis]
         textMask = repeated(textMask, count: batchSize, axis: 0)
         textMask = (textMask + 1) .> inputLengths[0..., .newAxis]
-        print("textMask shape: \(textMask.shape)")
         // BERT-style encoding
         let (bertSequenceOutput, _) = bert(inputIds: inputIDs, attentionMask: (.!textMask).asType(.int32))
-        print("bert: attentionMask shape: \(textMask.shape), bertSequenceOutput shape: \(bertSequenceOutput.shape)")
-
         let bertEncoded = bertEncoder(bertSequenceOutput).transposed(0, 2, 1)
-        print("bertEncoded shape: \(bertEncoded.shape)")
-
-        print("voice shape: \(voice.shape)")
         let refS = voice[min(seqLen - 2 /* padding */ - 1, voice.shape[0] - 1), 0 ... 1, 0...]
-        print("voice.shape[0]: \(voice.shape[0]) ")
-        print("refS = voice[\(min(seqLen - 2 /* padding */ - 1, voice.shape[0] - 1)), 0 ... 1, 0...], voice.shape[0]: \(voice.shape[0])")
-        print("refS shape: \(refS.shape)")
-
         let styleEmbedding = refS[0 ... 1, 128...]
-        print("styleEmbedding shape: \(styleEmbedding.shape), mean: \(styleEmbedding.mean().item(Float.self)), max: \(styleEmbedding.max().item(Float.self)) ")
-
         let encoded = predictor.textEncoder(x: bertEncoded, style: styleEmbedding, textLengths: inputLengths, mask: textMask)
-        print("encoded: \(encoded.shape)")
         let (x, _) = predictor.lstm(encoded)
-        print("lstm x: \(x.shape)")
         var durationPred = predictor.durationProj(x)
-        print("durationPred: \(durationPred.shape)")
-
         durationPred = MLX.sigmoid(durationPred).sum(axis: -1) / speed
-        print("durationSigmoid: \(durationPred.shape)")
-
         let predDur = MLX.clip(MLX.round(durationPred), min: 1).asType(.int32)[0]
-        print("predDur: \(predDur.shape)")
-        print("predDur: \(predDur.map({String($0.item(Float.self))}).joined(separator: ", "))")
-        print("Sum of durations: \(predDur.sum().item(Int.self))")
-
 
         // Alignment expansion
         let indices = MLX.concatenated( predDur.enumerated().map { idx, dur in MLX.full([dur.item(Int.self)], values: idx) } )
         var predAlnTrg = MLXArray.zeros([seqLen, indices.shape[0]])
         predAlnTrg[indices, MLXArray(0 ..< indices.shape[0])] = MLXArray(1)
         predAlnTrg = predAlnTrg[.newAxis, .ellipsis]
-        print("predAlnTrg: \(predAlnTrg.shape)")
-        print("Frame count (T′): \(indices.shape[0])")
+
         // Target encodings
         let en = encoded.transposed(0, 2, 1).matmul(predAlnTrg)
-        print("en shape:", en.shape)
-        print("en min/max/mean:", en.min(), en.max(), en.mean())
-
         let (F0_pred, N_pred) = predictor.f0nTrain(x: en, s: styleEmbedding)
-        print("F0_pred: \(F0_pred.shape), N_pred: \(N_pred.shape)")
-        print("F0_pred min/max: \(F0_pred.min().item(Float.self)),\(F0_pred.max().item(Float.self)), N_pred min/max: \(N_pred.min().item(Float.self)), \(N_pred.max().item(Float.self))")
-
         let tEn = textEncoder(x: inputIDs, inputLengths: inputLengths, m: textMask)
         let asr = tEn.matmul(predAlnTrg)
-
-        print("ASR shape: \(asr.shape), min/max/mean: \(asr.min().item(Float.self)), \(asr.max().item(Float.self)), \(asr.mean().item(Float.self))")
-
         let voiceS = refS[0 ... 1, 0 ... 127]
-        let audio = decoder(asr: asr, f0Curve: F0_pred, n: N_pred, s: voiceS)
 
-        print("audio shape: \(audio.shape), min, max, mean: \(audio.min().item(Float.self)), \(audio.max().item(Float.self)), \(audio.mean().item(Float.self))")
-        return Output(audio: audio[0], predDurations: predDur)
+        asr.eval()
+        F0_pred.eval()
+        N_pred.eval()
+        voiceS.eval()
+        predDur.eval()
+
+        autoreleasepool {
+            _ = en
+            _ = predAlnTrg
+            _ = styleEmbedding
+            _ = tEn
+            _ = refS
+            _ = indices
+            _ = durationPred
+            _ = x
+            _ = encoded
+            _ = styleEmbedding
+            _ = bertEncoded
+            _ = bertSequenceOutput
+            _ = textMask
+            _ = inputLengths
+        }
+
+        let audio = decoder(asr: asr, f0Curve: F0_pred, n: N_pred, s: voiceS)
+        audio.eval()
+
+        logger.debug("audio shape: \(audio.shape), min, max, mean: \(audio.min().item(Float.self)), \(audio.max().item(Float.self)), \(audio.mean().item(Float.self))")
+
+        autoreleasepool {
+          _ = asr
+          _ = F0_pred
+          _ = N_pred
+          _ = voiceS
+        }
+        return audio[0]
     }
 
 
@@ -160,17 +159,6 @@ final class Kokoro: Module {
                 }
             }
         }
-
-        // per-model cleanup
-//        weights = model.sanitize(weights: weights)
-
-        // quantize if needed
-//        if let quantization {
-//            quantize(model: model, groupSize: quantization.groupSize, bits: quantization.bits) {
-//                path, module in
-//                weights["\(path).scales"] != nil
-//            }
-//        }
 
         // apply the loaded weights
         let parameters = ModuleParameters.unflattened(weights)

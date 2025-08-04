@@ -27,7 +27,7 @@ public class AudioSessionManager {
             try AVAudioSession.sharedInstance().setCategory(.playback, options: [.duckOthers])
             try AVAudioSession.sharedInstance().setActive(true)
         } catch {
-            print("Audio session setup failed: \(error)")
+            logger.error("Audio session setup failed: \(error)")
         }
         #endif
         // No equivalent action needed for macOS
@@ -41,7 +41,7 @@ public class AudioSessionManager {
             try AVAudioSession.sharedInstance().setActive(true)
             try AVAudioSession.sharedInstance().setCategory(.playback, options: [.duckOthers])
         } catch {
-            print("Failed to reset audio session: \(error)")
+            logger.error("Failed to reset audio session: \(error)")
         }
         #endif
         // No equivalent action needed for macOS
@@ -65,7 +65,7 @@ public class AudioSessionManager {
         do {
             try AVAudioSession.sharedInstance().setActive(false)
         } catch {
-            print("Failed to deactivate audio session: \(error)")
+            logger.error("Failed to deactivate audio session: \(error)")
         }
         #endif
         // No equivalent action needed for macOS

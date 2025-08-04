@@ -10,6 +10,9 @@ import MLX
 import MLXNN
 import AVFoundation
 import libespeak_ng
+import OSLog
+
+let logger = Logger(subsystem: "kokoro-swift", category: "common")
 
 final class KokoroTTS {
     private let kokoro: Kokoro
@@ -35,14 +38,14 @@ final class KokoroTTS {
         do {
             try loadWeights()
         } catch {
-            print("error loading weights: \(error.localizedDescription)")
+            logger.error("error loading weights: \(error.localizedDescription)")
         }
     }
 
     deinit {
-        cleanupAudioSystem()
+//        cleanupAudioSystem()
         let terminateOK = espeak_Terminate()
-        print("ESpeakNGEngine termination OK: \(terminateOK == EE_OK)")
+        logger.debug("ESpeakNGEngine termination OK: \(terminateOK == EE_OK)")
         NotificationCenter.default.removeObserver(self)
      }
 
@@ -50,16 +53,16 @@ final class KokoroTTS {
         do {
             let documentsDirectory = try! FileManager.default.url(for: .documentDirectory, in: .userDomainMask, appropriateFor: nil, create: true)
             let initOK = espeak_Initialize(AUDIO_OUTPUT_PLAYBACK, 0, documentsDirectory.path, 0)
-            print("initOK: \(initOK)")
+            logger.debug("initOK: \(initOK)")
             let voiceName = ("gmw/en-GB-scotland" as NSString).utf8String
             try espeak_ng_SetVoiceByName(voiceName).check()
 //            try espeak_ng_SetVoiceByName(ESPEAKNG_DEFAULT_VOICE).check()
-            print("voice set")
+            logger.debug("voice set")
             //        try espeak_ng_Initialize(nil).check()
             try espeak_ng_SetPhonemeEvents(1, 0).check()
-            print("phoneme events set")
+            logger.debug("phoneme events set")
         } catch {
-            print("error: \(error.localizedDescription)")
+            logger.error("error: \(error.localizedDescription)")
         }
     }
 
@@ -82,7 +85,7 @@ final class KokoroTTS {
         if !result.isEmpty {
             return postProcessPhonemes(result.joined(separator: " "), language: language)
         } else {
-            print("No phonemes found for text: \(text)")
+            logger.error("No phonemes found for text: \(text)")
             return ""
         }
     }
@@ -139,7 +142,7 @@ final class KokoroTTS {
                 self.voices[voice] = try loadVoice(voice)
                 dialects.insert(voice.rawValue.language)
             } catch {
-                print("Error: could not load voice \(voice.rawValue.name)")
+                logger.error("Error: could not load voice \(voice.rawValue.name)")
             }
         }
 
@@ -149,7 +152,7 @@ final class KokoroTTS {
             do {
                 try self.g2ps[dialect] = G2P(british: dialect == .enGB, useEspeak: true)
             } catch {
-                print("error initializing G2P: \(error.localizedDescription)")
+                logger.error("error initializing G2P: \(error.localizedDescription)")
             }
         }
     }
@@ -158,11 +161,11 @@ final class KokoroTTS {
     func loadWeights(from filePath: String = "/Users/ilia/Downloads/kokoro-v1_0.safetensors") throws {
 //        let filePath = Bundle.main.path(forResource: "kokoro-v1_0", ofType: "safetensors")!
         let rawWeights = try MLX.loadArrays(url: URL(fileURLWithPath: filePath))
-//        print("raw weights: \(rawWeights.keys.sorted().joined(separator: "\n"))")
+//        logger.debug("raw weights: \(rawWeights.keys.sorted().joined(separator: "\n"))")
 
         let sanitizedWeights = sanitizeWeights(rawWeights)
         let weights = ModuleParameters.unflattened(sanitizedWeights)
-//        print("weights: \(weights.flattened().map({$0.0}).sorted().joined(separator: "\n"))")
+//        logger.debug("weights: \(weights.flattened().map({$0.0}).sorted().joined(separator: "\n"))")
         try kokoro.update(parameters: weights, verify: .all)
         eval(kokoro)
     }
@@ -178,10 +181,54 @@ final class KokoroTTS {
         do {
             let voiceNamePtr = (voice.rawValue.language.espeakVoiceName as NSString).utf8String
             try espeak_ng_SetVoiceByName(voiceNamePtr).check()
-            let audioData = try generate(text: text, voice: voice, speed: speed)
-            playAudioChunk(audioData)
+            try autoreleasepool {
+                let audioData = try generate(text: text, voice: voice, speed: speed)
+                playAudioChunk(audioData)
+                autoreleasepool {
+                  _ = audioData
+                }
+            }
         } catch {
-            print("Error: \(error)")
+            logger.error("Error: \(error)")
+        }
+        MLX.GPU.clearCache()
+    }
+
+    // generate audio and save into a file
+    func speak2file(text: String, voice: KokoroVoice, speed: Float = 1.0, fileURL: URL) throws {
+        let voiceNamePtr = (voice.rawValue.language.espeakVoiceName as NSString).utf8String
+        try espeak_ng_SetVoiceByName(voiceNamePtr).check()
+        let audioTensor = try generate(text: text, voice: voice, speed: speed)
+
+        // Skip empty chunks
+        let audioTensorShape = audioTensor.shape
+        guard !isAudioEmpty(shape: audioTensorShape) else {
+            logger.debug("Skipping empty audio chunk")
+            return
+        }
+
+        // Extract audio data
+        let (frameCount, audioData) = extractAudioData(from: audioTensor)
+
+        // Create PCM buffer
+        guard let buffer = createAudioBuffer(frameCount: frameCount, audioData: audioData) else {
+            logger.debug("Failed to create audio buffer")
+            let _ = autoreleasepool {
+                _ = audioData
+            }
+            return
+        }
+
+        let _ = autoreleasepool {
+            _ = audioData
+        }
+
+        do {
+            try buffer.saveToWavFile(at: fileURL)
+            logger.debug("file saved: \(fileURL.path())")
+        } catch {
+            logger.error("Could not save the wav file \(fileURL): \(error.localizedDescription)")
+            return
         }
     }
 
@@ -193,65 +240,72 @@ final class KokoroTTS {
         guard self.g2ps.keys.contains(voice.rawValue.language) else {
             throw NSError(domain: "KokoroTTS", code: 1002, userInfo: [NSLocalizedDescriptionKey: "G2P model not loaded for \(voice.rawValue.language)"])
         }
-        let g2p = g2ps[voice.rawValue.language]!
+//        let g2p = g2ps[voice.rawValue.language]!
 //        let (phonemes, _) = g2p(text: text, preprocess: false)
         let phonemes = getPhonemes(for: text, language: voice.rawValue.language)
         let inputIDs = encode(phonemes: phonemes)
-        print("phonemes: \(phonemes), inputIDs shape: \(inputIDs.shape)")
-        let output = kokoro(inputIDs: inputIDs, voice: self.voices[voice]!, speed: speed)
-        return output.audio
+        logger.debug("phonemes: \(phonemes), inputIDs shape: \(inputIDs.shape)")
+        return autoreleasepool { () -> MLXArray in
+            return kokoro(inputIDs: inputIDs, voice: self.voices[voice]!, speed: speed)
+        }
     }
 
     private func playAudioChunk(_ audioBuffer: MLXArray) {
-        // Skip empty chunks
-        let audioShape = audioBuffer.shape
-        print("audioShape: \(audioShape)")
-        guard !isAudioEmpty(shape: audioShape) else {
-            print("Skipping empty audio chunk")
-            return
-        }
+        autoreleasepool {
+            // Skip empty chunks
+            let audioShape = audioBuffer.shape
+            guard !isAudioEmpty(shape: audioShape) else {
+                logger.debug("Skipping empty audio chunk")
+                return
+            }
 
-        // Extract audio data
-        let (frameCount, audioData) = extractAudioData(from: audioBuffer)
-        print("audioData: \(audioData.count), frameCount: \(frameCount)")
+            // Extract audio data
+            let (frameCount, audioData) = extractAudioData(from: audioBuffer)
 
-        // Create PCM buffer
-        guard let buffer = createAudioBuffer(frameCount: frameCount, audioData: audioData) else {
-            print("Failed to create audio buffer")
-            return
-        }
+            // Create PCM buffer
+            guard let buffer = createAudioBuffer(frameCount: frameCount, audioData: audioData) else {
+                logger.debug("Failed to create audio buffer")
+                let _ = autoreleasepool {
+                    _ = audioData
+                }
+                return
+            }
 
-        let waveFileUrl = URL(fileURLWithPath: NSTemporaryDirectory()).appendingPathComponent("test.wav")
-        do {
-            print("saving wav file")
-            try buffer.saveToWavFile(at: waveFileUrl)
-            print("file saved: \(waveFileUrl.path())")
-//            return
-        } catch {
-            print("could not save the wav file: \(error.localizedDescription)")
-            return
-        }
+            let _ = autoreleasepool {
+                _ = audioData
+            }
 
-        // Ensure audio engine is running
-        if !audioEngine.isRunning {
-            resetAudioSystem()
-        }
+            let waveFileUrl = URL(fileURLWithPath: NSTemporaryDirectory()).appendingPathComponent("test.wav")
+            do {
+                try buffer.saveToWavFile(at: waveFileUrl)
+                logger.debug("file saved: \(waveFileUrl.path())")
+                //            return
+            } catch {
+                logger.error("could not save the wav file: \(error.localizedDescription)")
+                return
+            }
 
-        playerNode.scheduleBuffer(buffer, at: nil, options: [], completionCallbackType: .dataPlayedBack) { [weak self] _ in
-            print("scheduled")
-            guard let self = self else { return }
-        }
+            // Ensure audio engine is running
+            if !audioEngine.isRunning {
+                resetAudioSystem()
+            }
 
-        // Start playback if needed
-        if !playerNode.isPlaying {
-            print("start playing")
-            playerNode.play()
+            playerNode.scheduleBuffer(buffer, at: nil, options: [], completionCallbackType: .dataPlayedBack) { [weak self] _ in
+                logger.debug("scheduled")
+//                guard let self = self else { return }
+            }
 
-            // Simple retry if player didn't start
+            // Start playback if needed
             if !playerNode.isPlaying {
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-                    print("start playing again")
-                    self.playerNode.play()
+                logger.debug("start playing")
+                playerNode.play()
+
+                // Simple retry if player didn't start
+                if !playerNode.isPlaying {
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                        logger.debug("start playing again")
+                        self.playerNode.play()
+                    }
                 }
             }
         }
@@ -273,7 +327,7 @@ final class KokoroTTS {
             firstBatch.eval()
             return (frameCount, firstBatch.asArray(Float.self))
         }
-        print("Unexpected audio shape")
+        logger.debug("Unexpected audio shape")
         // Fallback for unexpected shape
         return (0, [])
     }
@@ -311,8 +365,6 @@ final class KokoroTTS {
     // MARK: - Audio System Setup
 
     private func setupAudioSystem() {
-        print("Setting up audio system")
-
         audioEngine = AVAudioEngine()
         playerNode = AVAudioPlayerNode()
         audioFormat = AVAudioFormat(standardFormatWithSampleRate: Double(KokoroTTS.sampleRate), channels: 1)!
@@ -328,9 +380,9 @@ final class KokoroTTS {
 
             do {
                 try audioEngine.start()
-                print("Audio system started successfully")
+                logger.debug("Audio system started successfully")
             } catch {
-                print("Failed to start audio engine: \(error)")
+                logger.error("Failed to start audio engine: \(error)")
             }
         }
     }
@@ -351,8 +403,6 @@ final class KokoroTTS {
     }
 
     private func resetAudioSystem() {
-        print("Resetting audio system")
-
         // Stop player node first to avoid QoS inversion
         if playerNode.isPlaying {
             playerNode.pause() // Use pause instead of stop to avoid blocking
@@ -376,9 +426,9 @@ final class KokoroTTS {
         // Restart engine
         do {
             try audioEngine.start()
-            print("Audio engine restarted")
+            logger.debug("Audio engine restarted")
         } catch {
-            print("Failed to restart audio engine: \(error)")
+            logger.error("Failed to restart audio engine: \(error)")
         }
     }
 
@@ -387,9 +437,6 @@ final class KokoroTTS {
 
     private func encode(phonemes: String) -> MLXArray {
         let inputIds = phonemes.compactMap { self.vocab[String($0)] }
-//        print("inputIds: \(inputIds)")
-//let fixedInputIds = [65, 156, 138, 56, 61, 16, 83, 58, 157, 69, 56, 16, 83, 16, 62, 156, 43, 102, 55, 16, 102, 56, 16, 83, 16, 64, 156, 72, 54, 51, 16, 123, 156, 72, 58, 62, 16, 102, 56, 16, 55, 156, 102, 61, 62, 16, 72, 56, 46, 16, 55, 156, 102, 61, 62, 83, 123, 123, 51, 16, 81, 86, 123, 65, 157, 138, 68, 16, 83, 16, 54, 156, 102, 125, 83, 54, 16, 64, 156, 102, 54, 102, 46, 147, 16, 65, 157, 86, 123, 16, 81, 83, 16, 61, 62, 156, 69, 123, 68, 16, 65, 156, 102, 61, 58, 83, 123, 46, 16, 61, 156, 51, 53, 123, 177, 62, 61, 16, 62, 83, 16, 81, 76, 135, 68, 16, 50, 157, 63, 16, 46, 156, 86, 123, 46, 16, 62, 83, 16, 54, 156, 102, 61, 83, 56]
-//        let paddedInputIdsBase = [0] + fixedInputIds + [0] // Add BOS/EOS tokens
         let paddedInputIdsBase = [0] + inputIds + [0] // Add BOS/EOS tokens
         return MLXArray(paddedInputIdsBase).expandedDimensions(axes: [0])
     }
@@ -397,7 +444,7 @@ final class KokoroTTS {
     // loading from the original JSON format
     func loadVoiceFromJSON(_ voice: KokoroVoice) throws -> MLXArray {
         let shape = [510, 1, 256]
-        print("voice filename: \(voice.rawValue.fileName)")
+        logger.debug("voice filename: \(voice.rawValue.fileName)")
         let filePath = Bundle.main.path(forResource: voice.rawValue.fileName, ofType: "json")!
         let data = try Data(contentsOf: URL(fileURLWithPath: filePath))
         let jsonObject = try JSONSerialization.jsonObject(with: data, options: [])
@@ -416,16 +463,18 @@ final class KokoroTTS {
                             swiftArray[swiftArrayIndex] = Float(n)
                             swiftArrayIndex += 1
                         } else {
-                            throw VoiceError.invalidElement("Cannoe load value ")
+                            throw VoiceError.invalidElement("Cannot load value ")
                         }
                     }
                 }
             }
         } else {
+            logger.error("Unexpected shape of nestedArray")
             throw VoiceError.invalidDataShape("Unexpected shape of nestedArray")
         }
 
         guard swiftArrayIndex == shape[0] * shape[1] * shape[2] else {
+            logger.error("Mismatch in array size: \(swiftArrayIndex) vs \(shape[0] * shape[1] * shape[2])")
             throw VoiceError.invalidDataShape("Mismatch in array size: \(swiftArrayIndex) vs \(shape[0] * shape[1] * shape[2])")
         }
 
@@ -435,21 +484,21 @@ final class KokoroTTS {
     // converting to safetensors format
     func convertVoice(_ voice: KokoroVoice) throws {
         let voiceArray = try loadVoiceFromJSON(voice)
-        print("Voice array shape: \(voiceArray.shape)")
+        logger.debug("Voice array shape: \(voiceArray.shape)")
         let downloadFolderUrl = FileManager.default.urls(for: .downloadsDirectory, in: .userDomainMask)[0]
         let safeTensorUrl = downloadFolderUrl.appending(component: voice.rawValue.fileName.appending(".safetensors"), directoryHint: .notDirectory)
-        print("saving to \(safeTensorUrl)")
+        logger.debug("saving to \(safeTensorUrl)")
         try MLX.save(arrays: [voice.rawValue.name: voiceArray], url: safeTensorUrl)
     }
 
     // utility to convert all voices in the original json format to safetensors
     func convertAllVoices() throws {
         for voice in KokoroVoice.allCases {
-            print("Converting voice: \(voice.rawValue.name)")
+            logger.debug("Converting voice: \(voice.rawValue.name)")
             try convertVoice(voice)
-            print("Successfully converted \(voice.rawValue.name)")
+            logger.debug("Successfully converted \(voice.rawValue.name)")
         }
-        print("All voices converted successfully.")
+        logger.error("All voices converted successfully.")
     }
 
     // update weight keys as there are slight differences between the original kokoro weights and MLX implementations of common layers
@@ -468,32 +517,12 @@ final class KokoroTTS {
                 sanitizedWeights[key] = value
 
             } else if key.hasPrefix("text_encoder") {
-//                if key.hasSuffix(".gamma") || key.hasSuffix(".beta") {
-//                    let baseKey = key.components(separatedBy: ".").dropLast().joined(separator: ".")
-//                    let newKey = key.hasSuffix(".gamma") ? "\(baseKey).weight" : "\(baseKey).bias"
-//                    sanitizedWeights[newKey] = value
-//
-//                } else
                 if key.contains("weight_v") {
                     if checkArrayShape(value) {
                         sanitizedWeights[key] = value
                     } else {
                         sanitizedWeights[key] = value.transposed(0, 2, 1)
                     }
-
-//                } else if key.hasSuffix(".weight_ih_l0_reverse") ||
-//                            key.hasSuffix(".weight_hh_l0_reverse") ||
-//                            key.hasSuffix(".bias_ih_l0_reverse") ||
-//                            key.hasSuffix(".bias_hh_l0_reverse") ||
-//                            key.hasSuffix(".weight_ih_l0") ||
-//                            key.hasSuffix(".weight_hh_l0") ||
-//                            key.hasSuffix(".bias_ih_l0") ||
-//                            key.hasSuffix(".bias_hh_l0") {
-//
-//                    let lstmSanitized = sanitizeLSTMWeights(key: key, value: value)
-//                    for (k, v) in lstmSanitized {
-//                        sanitizedWeights[k] = v
-//                    }
                 } else {
                     sanitizedWeights[key] = value
                 }
@@ -508,20 +537,6 @@ final class KokoroTTS {
                     } else {
                         sanitizedWeights[key] = value.transposed(0, 2, 1)
                     }
-
-//                } else if key.hasSuffix(".weight_ih_l0_reverse") ||
-//                            key.hasSuffix(".weight_hh_l0_reverse") ||
-//                            key.hasSuffix(".bias_ih_l0_reverse") ||
-//                            key.hasSuffix(".bias_hh_l0_reverse") ||
-//                            key.hasSuffix(".weight_ih_l0") ||
-//                            key.hasSuffix(".weight_hh_l0") ||
-//                            key.hasSuffix(".bias_ih_l0") ||
-//                            key.hasSuffix(".bias_hh_l0") {
-//
-//                    let lstmSanitized = sanitizeLSTMWeights(key: key, value: value)
-//                    for (k, v) in lstmSanitized {
-//                        sanitizedWeights[k] = v
-//                    }
                 } else {
                     sanitizedWeights[key] = value
                 }
@@ -561,7 +576,6 @@ final class KokoroTTS {
             returnValue = value.transposed(0, 2, 1)
         } else if key.hasSuffix(".weight_v") || key.hasSuffix(".weight_g") {
             returnValue = checkArrayShape(value) ? value : value.transposed(0, 2, 1)
-//            print("key: \(key), value shape: \(returnValue.shape)")
         } else {
             returnValue = value
         }

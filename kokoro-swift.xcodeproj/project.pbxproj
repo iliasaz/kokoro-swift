@@ -39,6 +39,7 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		491ABCC52E413DD500C4E0E1 /* kokoro-swift.xctestplan */ = {isa = PBXFileReference; lastKnownFileType = text; path = "kokoro-swift.xctestplan"; sourceTree = "<group>"; };
 		49B7A2222D7FB0E200B2BD45 /* kokoro-swift.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "kokoro-swift.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		49B7A2332D7FB0E300B2BD45 /* kokoro-swiftTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "kokoro-swiftTests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
 		49B7A23D2D7FB0E300B2BD45 /* kokoro-swiftUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "kokoro-swiftUITests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -54,11 +55,6 @@
 		49B7A2362D7FB0E300B2BD45 /* kokoro-swiftTests */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			path = "kokoro-swiftTests";
-			sourceTree = "<group>";
-		};
-		49B7A2402D7FB0E300B2BD45 /* kokoro-swiftUITests */ = {
-			isa = PBXFileSystemSynchronizedRootGroup;
-			path = "kokoro-swiftUITests";
 			sourceTree = "<group>";
 		};
 /* End PBXFileSystemSynchronizedRootGroup section */
@@ -102,10 +98,10 @@
 		49B7A2192D7FB0E200B2BD45 = {
 			isa = PBXGroup;
 			children = (
+				491ABCC52E413DD500C4E0E1 /* kokoro-swift.xctestplan */,
 				49CC76362D9E3D43003E8AD1 /* README.md */,
 				49B7A2242D7FB0E200B2BD45 /* kokoro-swift */,
 				49B7A2362D7FB0E300B2BD45 /* kokoro-swiftTests */,
-				49B7A2402D7FB0E300B2BD45 /* kokoro-swiftUITests */,
 				49F93D6C2DC6C53500366D2C /* Frameworks */,
 				49B7A2232D7FB0E200B2BD45 /* Products */,
 			);
@@ -199,9 +195,6 @@
 			);
 			dependencies = (
 				49B7A23F2D7FB0E300B2BD45 /* PBXTargetDependency */,
-			);
-			fileSystemSynchronizedGroups = (
-				49B7A2402D7FB0E300B2BD45 /* kokoro-swiftUITests */,
 			);
 			name = "kokoro-swiftUITests";
 			packageProductDependencies = (

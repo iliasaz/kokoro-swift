@@ -324,9 +324,8 @@ class MLXSTFT {
         // Compute the phase correction as the difference between the modded difference and the original.
         var phCorrect = ddmod - dd
         phCorrect = which( (abs(dd) .< effectiveDiscont), 0.0, phCorrect )
-        let up = MLXArray.init(data: phase.asData())
-        up[1..., axis: axis] = phase[1..., axis: axis] + phCorrect.cumsum(axis: axis)
-        return up
+        phase[1..., axis: axis] = phase[1..., axis: axis] + phCorrect.cumsum(axis: axis)
+        return phase
     }
 
     /// Performs STFT followed by inverse STFT for validation.

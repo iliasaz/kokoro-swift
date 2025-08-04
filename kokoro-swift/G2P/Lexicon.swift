@@ -539,7 +539,7 @@ class Lexicon {
             extend_num(newWord, escape: true)
         }
         if result.isEmpty {
-            print("❌ TODO:NUM", word, currency ?? "")
+            logger.debug("❌ TODO:NUM \(word), \(currency ?? "")")
             return (nil, nil)
         }
         let finalResult = result.map { $0.0 }.joined(separator: " ")

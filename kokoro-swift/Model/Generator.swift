@@ -105,7 +105,6 @@ class Generator: Module {
     }
 
     func callAsFunction(x: MLXArray, style: MLXArray, f0: MLXArray) -> MLXArray {
-        print("generator inputs. x shape: \(x.shape), mean: \(x.mean().item(Float.self)), max: \(x.max().item(Float.self))\n style shape: \(style.shape), mean: \(style.mean().item(Float.self)), max: \(style.max().item(Float.self))\n f0 shape: \(f0.shape), mean: \(f0.mean().item(Float.self)), max: \(f0.max().item(Float.self))")
 
         // Step 1: Upsample f0
         var f0 = f0.expandedDimensions(axis: 1).transposed(axes: [0, 2, 1])
@@ -120,8 +119,6 @@ class Generator: Module {
         let har = MLX.concatenated([harSpec, harPhase], axis: 1).transposed(axes: [0, 2, 1])
         var x = x
 
-        print("stage0  x mean/max", x.mean(), x.max())
-
         for i in 0..<numUpsamples {
             x = leakyRelu(x, negativeSlope: 0.1)
 
@@ -132,20 +129,15 @@ class Generator: Module {
             x = upsampleLayers[i](x: x, conv: convTransposed1d_wrapped)
             x = x.transposed(axes: [0, 2, 1])
 
-            print("up\(i)  after upsample mean/max:", x.mean(), x.max())
-
             if i == numUpsamples - 1 {
                 x = reflectionPad(x)
             }
-
-            print("up\(i)  xSource mean/max:", xSource.mean(), xSource.max())
 
             x += xSource
 
             var xs: MLXArray?
             for j in 0..<numKernels {
                 let resBlockOut = resBlocks[i * numKernels + j](x: x, s: style)
-                print("up\(i) res\(j) mean/max:", resBlockOut.mean(), resBlockOut.max())
                 xs = xs.map { $0 + resBlockOut } ?? resBlockOut
             }
             x = xs! / Float(numKernels)
@@ -158,19 +150,12 @@ class Generator: Module {
         x = x.transposed(axes: [0, 2, 1])
 
         let magSliceAfterConvPost = x[0..., 0..<postNFFT/2+1, 0...]
-        print("magSliceAfterConvPost stats:", magSliceAfterConvPost.min().item(Float.self),
-              magSliceAfterConvPost.max().item(Float.self),
-              magSliceAfterConvPost.mean().item(Float.self))
-
 
         // Final waveform synthesis
         let spec = MLX.exp(x[0..., 0..<postNFFT / 2 + 1, 0...])
         let phase = MLX.sin(x[0..., (postNFFT / 2 + 1)..., 0...])
         let waveform = stft.inverse(magnitude: spec, phase: phase)
 
-        print("spec stats:", spec.min().item(Float.self), spec.max().item(Float.self), spec.mean().item(Float.self))
-        print("phase stats:", phase.min().item(Float.self), phase.max().item(Float.self))
-        print("waveform shape: \(waveform.shape), min: \(waveform.min().item(Float.self)), max: \(waveform.max().item(Float.self)), mean: \(waveform.mean().item(Float.self))")
         return waveform
     }
 }

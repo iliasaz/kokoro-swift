@@ -6,8 +6,7 @@ This repo is a Work-In-Progress port of Kokoro TTS model to Swift using MLX fram
 
 Credits to related open-source projects.  
 - [Original kokoro model](https://github.com/hexgrad/kokoro)
-- [misaki G2P](https://github.com/hexgrad/misaki)
-- [Kokoro MLX port (python)](https://github.com/Blaizzy/mlx-audio)
-
-
-
+- [misaki G2P - grapheme to phoneme mapping library](https://github.com/hexgrad/misaki)
+- [Apple MLX](https://github.com/ml-explore/mlx)
+- [mlx-audio](https://github.com/Blaizzy/mlx-audio)
+- [eSpeak NG](https://github.com/espeak-ng/espeak-ng)

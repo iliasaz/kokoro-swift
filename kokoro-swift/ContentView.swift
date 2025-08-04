@@ -54,7 +54,7 @@ struct ContentView: View {
         do {
             try tts.convertAllVoices()
         } catch {
-            print("error: \(error.localizedDescription)")
+            logger.error("error: \(error.localizedDescription)")
         }
     }
 

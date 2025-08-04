@@ -70,30 +70,18 @@ class Decoder: Module {
 
     func callAsFunction(asr: MLXArray, f0Curve: MLXArray, n: MLXArray, s: MLXArray) -> MLXArray {
         // Process F0 and Noise signals
-//        let loadedF0Curve: MLXArray
-//        do {
-//            print("loading F0Curve from /Users/ilia/Downloads/F0Curve.safetensors")
-//            loadedF0Curve = try MLX.loadArrays(url: URL(fileURLWithPath: "/Users/ilia/Downloads/F0Curve.safetensors"))["F0Curve"]!
-//        } catch {
-//            fatalError("could not load F0Curve")
-//        }
-//        var f0 = loadedF0Curve.expandedDimensions(axis: 1).transposed(axes: [0, 2, 1])
-
         var f0 = f0Curve.expandedDimensions(axis: 1).transposed(axes: [0, 2, 1])
 
         f0 = f0Conv(x: f0, conv: conv1d).transposed(axes: [0, 2, 1])
-
-//        let n0 = MLX.zeros(like: n)
-//        var n = n0.expandedDimensions(axis: 1).transposed(axes: [0, 2, 1])
         var n = n.expandedDimensions(axis: 1).transposed(axes: [0, 2, 1])
         n = nConv(x: n, conv: conv1d).transposed(axes: [0, 2, 1])
 
         // Concatenate ASR, F0, and Noise inputs
         var x = MLX.concatenated([asr, f0, n], axis: 1)
 
-        print("before encode: \(x.mean().item(Float.self)), \(x.max().item(Float.self))")
+        logger.debug("before encode: \(x.mean().item(Float.self)), \(x.max().item(Float.self))")
         x = encode(x, s: s)
-        print("after encode mean/max:", x.mean().item(Float.self), x.max().item(Float.self))
+        logger.debug("after encode mean/max: \(x.mean().item(Float.self)), \(x.max().item(Float.self))")
 
         // Process ASR residuals
         var asrRes = asr.transposed(axes: [0, 2, 1])
@@ -111,7 +99,7 @@ class Decoder: Module {
                 residualConnection = false
             }
         }
-        print("before generator mean/max:", x.mean(), x.max())
+        logger.debug("before generator mean/max: \(x.mean()), \(x.max())")
         // Pass through the generator for final waveform output
         let audio = generator(x: x, style: s, f0: f0Curve)
 //        let audio = generator(x: x, style: s, f0: loadedF0Curve)
